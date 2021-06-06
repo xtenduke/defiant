@@ -1,18 +1,28 @@
 import express, { Express } from "express";
-
+import {RPCServer} from "./RPCServer";
 
 export class Server {
-    private express: Express;
+    private readonly express: Express;
+    private readonly rpcServer: RPCServer;
 
     constructor() {
         this.express = express();
-        this.registerRoutes(this.express);
+        this.rpcServer = new RPCServer(69420);
+    }
+
+    public async run() {
+        this.registerRoutes(this.express)
+        await this.startRPCServer();
     }
 
     private registerRoutes(express: Express) {
         express.get('/', (_, response) => {
             response.send('Hello world');
         });
+    }
+
+    private async startRPCServer() {
+        await this.rpcServer.startServer();
     }
 
     /**
@@ -52,3 +62,12 @@ export class Server {
      *
      */
 }
+
+const server = new Server();
+
+server.run().then(() => {
+    console.log(`Booted ssqs-node`);
+}).catch((err: Error) => {
+    console.log(`ssqs-node died`, err);
+    process.exit(1);
+})
