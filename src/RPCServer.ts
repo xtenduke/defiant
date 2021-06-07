@@ -2,9 +2,8 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import {PackageDefinition} from "@grpc/grpc-js/build/src/make-client";
 import {ProtoGrpcType} from "../proto/route_client_queue";
-import {GreeterHandlers} from "../proto/client_queue/Greeter";
-import {HelloReply} from "../proto/client_queue/HelloReply";
-import {HelloRequest} from "../proto/client_queue/HelloRequest";
+import {AddMessageReply} from "../proto/client_queue/AddMessageReply";
+import {AddMessageRequest} from "../proto/client_queue/AddMessageRequest";
 import {ServerUnaryCall} from "@grpc/grpc-js";
 
 export class RPCServer {
@@ -17,26 +16,21 @@ export class RPCServer {
         this.proto = grpc.loadPackageDefinition(this.packageDefinition) as unknown as ProtoGrpcType;
     }
 
-    private SayHello(
-        call: ServerUnaryCall<HelloRequest, HelloReply>,
-        callback: grpc.sendUnaryData<HelloReply>
+    private AddMessage(
+        call: ServerUnaryCall<AddMessageRequest, AddMessageReply>,
+        callback: grpc.sendUnaryData<AddMessageReply>
     ) {
-        callback(null, {message: 'beans'});
-    }
-
-    private SayHelloAgain(
-        call: ServerUnaryCall<HelloRequest, HelloReply>,
-        callback: grpc.sendUnaryData<HelloReply>
-    ) {
-        callback(null, {message: 'and again, beans'});
+        callback(null, {
+            message: `you tried to enqueue message with data: ${call.request.data}`,
+            success: true,
+        });
     }
 
     public async startServer(): Promise<void> {
         console.log(`Start server on ${this.port}`);
         const server = new grpc.Server();
-        server.addService(this.proto.client_queue.Greeter.service, {
-            SayHello: this.SayHello,
-            SayHelloAgain: this.SayHelloAgain,
+        server.addService(this.proto.client_queue.Queue.service, {
+            AddMessage: this.AddMessage,
         });
 
         await server.bindAsync(
