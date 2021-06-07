@@ -1,10 +1,11 @@
-import grpc, { ServerUnaryCall } from '@grpc/grpc-js';
-import * as ProtoLoader from '@grpc/proto-loader';
+import * as grpc from '@grpc/grpc-js';
+import * as protoLoader from '@grpc/proto-loader';
 import {PackageDefinition} from "@grpc/grpc-js/build/src/make-client";
 import {ProtoGrpcType} from "../proto/route_client_queue";
-import { GreeterHandlers } from "../proto/client_queue/Greeter";
+import {GreeterHandlers} from "../proto/client_queue/Greeter";
 import {HelloReply} from "../proto/client_queue/HelloReply";
 import {HelloRequest} from "../proto/client_queue/HelloRequest";
+import {ServerUnaryCall} from "@grpc/grpc-js";
 
 export class RPCServer {
     private readonly CLIENT_QUEUE_PROTO_PATH = './proto/route_client_queue.proto';
@@ -12,7 +13,7 @@ export class RPCServer {
     private readonly proto: ProtoGrpcType;
 
     public constructor(private readonly port: number) {
-        this.packageDefinition = ProtoLoader.loadSync(this.CLIENT_QUEUE_PROTO_PATH);
+        this.packageDefinition = protoLoader.loadSync(this.CLIENT_QUEUE_PROTO_PATH);
         this.proto = grpc.loadPackageDefinition(this.packageDefinition) as unknown as ProtoGrpcType;
     }
 
@@ -34,6 +35,7 @@ export class RPCServer {
     };
 
     public async startServer(): Promise<void> {
+        console.log(`Start server on ${this.port}`);
         const server = new grpc.Server();
         server.addService(this.proto.client_queue.Greeter.service, this.handlers);
 
@@ -43,10 +45,11 @@ export class RPCServer {
             (err: Error | null, port: number) => {
                 if (err) {
                     console.error(`Error starting server: ${err.message}`);
+                    throw err;
                 } else {
                     console.log(`Server bound at port: ${port}`)
+                    server.start();
                 }
-                server.start();
         });
     }
 }

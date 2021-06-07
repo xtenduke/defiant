@@ -7,7 +7,7 @@ export class Server {
 
     constructor() {
         this.express = express();
-        this.rpcServer = new RPCServer(69420);
+        this.rpcServer = new RPCServer(8080);
     }
 
     public async run() {
