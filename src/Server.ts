@@ -1,5 +1,6 @@
 import express, { Express } from "express";
 import {RPCServer} from "./RPCServer";
+import {Logger} from "./util/Logger";
 
 export class Server {
     private readonly express: Express;
@@ -66,8 +67,8 @@ export class Server {
 const server = new Server();
 
 server.run().then(() => {
-    console.log(`Booted ssqs-node`);
+    Logger.log('Booted defiant');
 }).catch((err: Error) => {
-    console.log(`ssqs-node died`, err);
+    Logger.error('defiant died', err);
     process.exit(1);
 })

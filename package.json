@@ -9,7 +9,7 @@
     "build:proto": "yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/ proto/*.proto\n",
     "build": "rm -rf dist && yarn build:proto && tsc",
     "start": "node ./dist/src/Server.js",
-    "start:dev": "yarn start --watch",
+    "start:dev": "tsc && yarn start --watch",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix"
   },
   "dependencies": {
