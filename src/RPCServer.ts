@@ -6,6 +6,7 @@ import {GreeterHandlers} from "../proto/client_queue/Greeter";
 import {HelloReply} from "../proto/client_queue/HelloReply";
 import {HelloRequest} from "../proto/client_queue/HelloRequest";
 import {ServerUnaryCall} from "@grpc/grpc-js";
+import {Logger} from "./util/Logger";
 
 export class RPCServer {
     private readonly CLIENT_QUEUE_PROTO_PATH = './proto/route_client_queue.proto';
@@ -35,7 +36,7 @@ export class RPCServer {
     };
 
     public async startServer(): Promise<void> {
-        console.log(`Start server on ${this.port}`);
+        Logger.log('Start server on port:', this.port);
         const server = new grpc.Server();
         server.addService(this.proto.client_queue.Greeter.service, this.handlers);
 
@@ -44,10 +45,10 @@ export class RPCServer {
             grpc.ServerCredentials.createInsecure(),
             (err: Error | null, port: number) => {
                 if (err) {
-                    console.error(`Error starting server: ${err.message}`);
+                    Logger.error('error starting server:', err.message);
                     throw err;
                 } else {
-                    console.log(`Server bound at port: ${port}`)
+                    Logger.debug('Server bound on port', port);
                     server.start();
                 }
         });
