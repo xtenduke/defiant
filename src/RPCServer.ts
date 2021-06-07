@@ -17,27 +17,27 @@ export class RPCServer {
         this.proto = grpc.loadPackageDefinition(this.packageDefinition) as unknown as ProtoGrpcType;
     }
 
-    // bc they must be string equal, dynamic codegen reflects in...
-    private readonly handlers: GreeterHandlers = {
-        SayHello(
-            call: ServerUnaryCall<HelloRequest, HelloReply>,
-            callback: grpc.sendUnaryData<HelloReply>
-        ) {
-            callback(null, {message: 'beans'});
-        },
+    private SayHello(
+        call: ServerUnaryCall<HelloRequest, HelloReply>,
+        callback: grpc.sendUnaryData<HelloReply>
+    ) {
+        callback(null, {message: 'beans'});
+    }
 
-        SayHelloAgain(
-            call: ServerUnaryCall<HelloRequest, HelloReply>,
-            callback: grpc.sendUnaryData<HelloReply>
-        ) {
-            callback(null, {message: 'and again, beans'});
-        }
-    };
+    private SayHelloAgain(
+        call: ServerUnaryCall<HelloRequest, HelloReply>,
+        callback: grpc.sendUnaryData<HelloReply>
+    ) {
+        callback(null, {message: 'and again, beans'});
+    }
 
     public async startServer(): Promise<void> {
         console.log(`Start server on ${this.port}`);
         const server = new grpc.Server();
-        server.addService(this.proto.client_queue.Greeter.service, this.handlers);
+        server.addService(this.proto.client_queue.Greeter.service, {
+            SayHello: this.SayHello,
+            SayHelloAgain: this.SayHelloAgain,
+        });
 
         await server.bindAsync(
             `0.0.0.0:${this.port}`,
