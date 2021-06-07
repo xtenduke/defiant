@@ -2,9 +2,8 @@ import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import {PackageDefinition} from "@grpc/grpc-js/build/src/make-client";
 import {ProtoGrpcType} from "../proto/route_client_queue";
-import {GreeterHandlers} from "../proto/client_queue/Greeter";
-import {HelloReply} from "../proto/client_queue/HelloReply";
-import {HelloRequest} from "../proto/client_queue/HelloRequest";
+import {AddMessageReply} from "../proto/client_queue/AddMessageReply";
+import {AddMessageRequest} from "../proto/client_queue/AddMessageRequest";
 import {ServerUnaryCall} from "@grpc/grpc-js";
 import {Logger} from "./util/Logger";
 
@@ -18,27 +17,22 @@ export class RPCServer {
         this.proto = grpc.loadPackageDefinition(this.packageDefinition) as unknown as ProtoGrpcType;
     }
 
-    // bc they must be string equal, dynamic codegen reflects in...
-    private readonly handlers: GreeterHandlers = {
-        SayHello(
-            call: ServerUnaryCall<HelloRequest, HelloReply>,
-            callback: grpc.sendUnaryData<HelloReply>
-        ) {
-            callback(null, {message: 'beans'});
-        },
-
-        SayHelloAgain(
-            call: ServerUnaryCall<HelloRequest, HelloReply>,
-            callback: grpc.sendUnaryData<HelloReply>
-        ) {
-            callback(null, {message: 'and again, beans'});
-        }
-    };
+    private AddMessage(
+        call: ServerUnaryCall<AddMessageRequest, AddMessageReply>,
+        callback: grpc.sendUnaryData<AddMessageReply>
+    ) {
+        callback(null, {
+            message: `you tried to enqueue message with data: ${call.request.data}`,
+            success: true,
+        });
+    }
 
     public async startServer(): Promise<void> {
         Logger.log('Start server on port:', this.port);
         const server = new grpc.Server();
-        server.addService(this.proto.client_queue.Greeter.service, this.handlers);
+        server.addService(this.proto.client_queue.Queue.service, {
+            AddMessage: this.AddMessage,
+        });
 
         await server.bindAsync(
             `0.0.0.0:${this.port}`,

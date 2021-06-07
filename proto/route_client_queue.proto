@@ -3,20 +3,19 @@ option objc_class_prefix = "HLW";
 
 package client_queue;
 
-// The greeting service definition.
-service Greeter {
-  // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
-  // Sends another greeting
-  rpc SayHelloAgain (HelloRequest) returns (HelloReply) {}
+// queue service definition (consumed by clients)
+service Queue {
+  // Adds a message to be queued
+  rpc AddMessage(AddMessageRequest) returns (AddMessageReply) {}
 }
 
-// The request message containing the user's name.
-message HelloRequest {
-  string name = 1;
+// The request message containing the message data
+message AddMessageRequest {
+  string data = 1;
 }
 
-// The response message containing the greetings
-message HelloReply {
+// The response message containing queue message add success
+message AddMessageReply {
   string message = 1;
+  bool success = 2;
 }
