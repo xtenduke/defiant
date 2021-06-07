@@ -5,6 +5,7 @@ import {ProtoGrpcType} from "../proto/route_client_queue";
 import {AddMessageReply} from "../proto/client_queue/AddMessageReply";
 import {AddMessageRequest} from "../proto/client_queue/AddMessageRequest";
 import {ServerUnaryCall} from "@grpc/grpc-js";
+import {Logger} from "./util/Logger";
 
 export class RPCServer {
     private readonly CLIENT_QUEUE_PROTO_PATH = './proto/route_client_queue.proto';
@@ -27,7 +28,7 @@ export class RPCServer {
     }
 
     public async startServer(): Promise<void> {
-        console.log(`Start server on ${this.port}`);
+        Logger.log('Start server on port:', this.port);
         const server = new grpc.Server();
         server.addService(this.proto.client_queue.Queue.service, {
             AddMessage: this.AddMessage,
@@ -38,10 +39,10 @@ export class RPCServer {
             grpc.ServerCredentials.createInsecure(),
             (err: Error | null, port: number) => {
                 if (err) {
-                    console.error(`Error starting server: ${err.message}`);
+                    Logger.error('error starting server:', err.message);
                     throw err;
                 } else {
-                    console.log(`Server bound at port: ${port}`)
+                    Logger.debug('Server bound on port', port);
                     server.start();
                 }
         });
