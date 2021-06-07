@@ -7,15 +7,28 @@ package client_queue;
 service Queue {
   // Adds a message to be queued
   rpc AddMessage(AddMessageRequest) returns (AddMessageReply) {}
+  rpc ListenForMessages(UnicastMessageRequest) returns (stream UnicastMessage) {}
 }
 
 // The request message containing the message data
 message AddMessageRequest {
-  string data = 1;
+  string data = 1; // this will probably just be json
+  string queueId = 2;
 }
 
 // The response message containing queue message add success
 message AddMessageReply {
   string message = 1;
   bool success = 2;
+}
+
+// Listen for messages
+// Should this be a standard 'message' type?
+message UnicastMessageRequest {
+  string queueId = 1;
+}
+
+message UnicastMessage {
+  string queueId = 1;
+  string data = 2; // this will probably just be json
 }
