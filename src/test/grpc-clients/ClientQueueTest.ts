@@ -16,15 +16,27 @@ const target = 'localhost:8080';
 const client = new client_queue_proto.Queue(target,
     grpc.credentials.createInsecure());
 
-const request = {
+const addMessageRequest = {
+    queueId: 'beans',
     data: 'heyit\'sjustsomeutf8stringwhatareyougoingtodoaboutit',
 }
 
-client.addMessage(request, function(err, response) {
+client.addMessage(addMessageRequest, function(err, response) {
     if (err) {
         console.error('Caught error on addmessage handler', err);
         return;
     }
 
     console.log('Added a message ' + JSON.stringify(response));
+});
+
+const listenMessageRequest = {
+    queueId: addMessageRequest.queueId,
+}
+
+client.listenForMessages(listenMessageRequest).on('data', (response) => {
+    if (response) {
+        console.log('wow I got something');
+        console.log(JSON.stringify(response));
+    }
 });

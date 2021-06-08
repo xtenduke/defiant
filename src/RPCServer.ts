@@ -8,6 +8,7 @@ import {UnicastMessageRequest} from "../proto/client_queue/UnicastMessageRequest
 import {UnicastMessage} from "../proto/client_queue/UnicastMessage";
 import {ServerUnaryCall, ServerWritableStream} from "@grpc/grpc-js";
 import {Logger} from "./util/Logger";
+import {QueueHandlers} from "../proto/client_queue/Queue";
 
 export class RPCServer {
     private readonly CLIENT_QUEUE_PROTO_PATH = './proto/route_client_queue.proto';
@@ -29,6 +30,7 @@ export class RPCServer {
         call: ServerUnaryCall<AddMessageRequest, AddMessageReply>,
         callback: grpc.sendUnaryData<AddMessageReply>
     ) {
+        Logger.log('Request to AddMessage:', call.request);
         const queueId = call.request.queueId;
         if (!queueId) {
             Logger.error('Someone called [AddMessage] without a queueId');
@@ -77,49 +79,56 @@ export class RPCServer {
 
         queueListeners.push(call);
         this.listeners.set(queueId, queueListeners);
-        // begin processing
-        this.processMessages();
         // not going to call `call.end();` as we will wait for the connection to die, or the client to close
     }
 
-    public processMessages() {
+    public async processMessages(): Promise<void> {
         // can't just pop messages off and fire them
         // we need a way to listen to process receipt from the client
         // ok for the meantime
         if (this.processing) {
             return;
         } else {
-            this.processing = false;
+            this.processing = true;
         }
 
-        Logger.log('[ProcessMessages] Begin')
+        Logger.log('[ProcessMessages] Begin');
+        // I need worker threads please
+        await this.processNext();
+    }
 
-        while(this.processing) {
-            // come up with a better way to schedule this
-            setTimeout(() => {
-                const message = this.messages.shift();
-                if (message) {
-                    const listeners = this.listeners.get(message.queueId);
-                    // pick a random listener to send to
-                    const random = Math.floor(Math.random() * this.listeners.size - 1); // can probably think of a more clever way to do this
-                    // listeners could be weighted
-                    const listener = listeners[random];
-                    listener.write(message);
-                }
+    private async processNext() {
+        const message = this.messages.shift();
+        if (message) {
+            const listeners = this.listeners.get(message.queueId);
+            // pick a random listener to send to
+            const random = Math.floor(Math.random() * this.listeners.size); // can probably think of a more clever way to do this
+            // listeners could be weighted
+            const listener = listeners[random];
+            if (!listener) {
+                Logger.log(`[ProcessNext] no listener found for queueId: ${message.queueId}`);
+            }
+            listener.write(message);
+        }
+
+        if (this.processing) {
+            setTimeout(async () => {
+                await this.processNext();
             }, 0);
-
         }
     }
 
     public async startServer(): Promise<void> {
         Logger.log('Start server on port:', this.port);
         const server = new grpc.Server();
-        server.addService(this.proto.client_queue.Queue.service, {
-            AddMessage: this.AddMessage,
-            ListenToMessages: this.ListenToMessages,
-        });
+        // todo: imporve typing here
+        const functions: QueueHandlers = {
+            AddMessage: this.AddMessage.bind(this),
+            ListenForMessages: this.ListenToMessages.bind(this),
+        };
+        server.addService(this.proto.client_queue.Queue.service, functions);
 
-        await server.bindAsync(
+        server.bindAsync(
             `0.0.0.0:${this.port}`,
             grpc.ServerCredentials.createInsecure(),
             (err: Error | null, port: number) => {
@@ -129,8 +138,11 @@ export class RPCServer {
                 } else {
                     Logger.debug('Server bound on port', port);
                     server.start();
+
+                    // yuck
+                    this.processMessages();
                 }
-        });
+            });
     }
 
     public async stopProcessing() {
