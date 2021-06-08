@@ -12,6 +12,8 @@ export interface ProtoGrpcType {
     AddMessageReply: MessageTypeDefinition
     AddMessageRequest: MessageTypeDefinition
     Queue: SubtypeConstructor<typeof grpc.Client, _client_queue_QueueClient> & { service: _client_queue_QueueDefinition }
+    UnicastMessage: MessageTypeDefinition
+    UnicastMessageRequest: MessageTypeDefinition
   }
 }
 

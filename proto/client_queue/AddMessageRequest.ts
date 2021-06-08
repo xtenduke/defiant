@@ -3,8 +3,10 @@
 
 export interface AddMessageRequest {
   'data'?: (string);
+  'queueId'?: (string);
 }
 
 export interface AddMessageRequest__Output {
   'data': (string);
+  'queueId': (string);
 }
