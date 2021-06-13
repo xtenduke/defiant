@@ -36,6 +36,23 @@ const listenMessageRequest = {
 
 client.listenForMessages(listenMessageRequest).on('data', (response) => {
     if (response) {
+        console.log('Received message ' + JSON.stringify(response));
+
+        const confirmMessageRequest = {
+            queueId: listenMessageRequest.queueId,
+            messageId: response.id,
+        };
+
+        client.confirmMessage(
+            confirmMessageRequest,
+            (error, response) => {
+                if (error) {
+                    console.error('Confirming message failed', error);
+                } else if(response) {
+                    console.log('Successfully confirmed message ' + JSON.stringify(response));
+                }
+        });
+
         console.log('wow I got something');
         console.log(JSON.stringify(response));
     }
