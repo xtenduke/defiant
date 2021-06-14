@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "description": "",
   "author": "Jake Laurie",
-  "private": true,
-  "license": "UNLICENSED",
+  "private": false,
+  "license": "Apache",
   "scripts": {
     "test:grpc": "tsc && node ./dist/ClientQueueTest.js"
   },
