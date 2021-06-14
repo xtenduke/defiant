@@ -7,7 +7,7 @@ let receivedMessages = 0;
 let confirmedMessages = 0;
 
 const packageDefinition = protoLoader.loadSync(
-    path.join(__dirname, '../../../proto/route_client_queue.proto'),
+    path.join(__dirname, '../../proto/route_client_queue.proto'),
     {keepCase: true,
         longs: String,
         enums: String,
