@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build:proto": "yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/ proto/*.proto\n",
+    "build:proto": "yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/gen/ proto/*.proto\n",
     "build": "rm -rf dist && yarn build:proto && tsc && cp */**.proto dist/proto",
     "start": "node ./dist/src/Server.js",
     "start:dev": "yarn start --watch",
