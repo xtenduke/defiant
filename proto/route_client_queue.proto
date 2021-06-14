@@ -6,8 +6,9 @@ package client_queue;
 // queue service definition (consumed by clients)
 service Queue {
   // Adds a message to be queued
-  rpc AddMessage(AddMessageRequest) returns (AddMessageReply) {}
+  rpc AddMessage(AddMessageRequest) returns (AddMessageResponse) {}
   rpc ListenForMessages(UnicastMessageRequest) returns (stream UnicastMessage) {}
+  rpc ConfirmMessage(ConfirmMessageRequest) returns (ConfirmMessageResponse) {}
 }
 
 // The request message containing the message data
@@ -17,18 +18,32 @@ message AddMessageRequest {
 }
 
 // The response message containing queue message add success
-message AddMessageReply {
-  string message = 1;
+message AddMessageResponse {
+  string id = 1;
   bool success = 2;
+  string info = 3;
 }
 
 // Listen for messages
 // Should this be a standard 'message' type?
 message UnicastMessageRequest {
   string queueId = 1;
+  string messageId = 2;
 }
 
 message UnicastMessage {
+  string id = 1;
+  string queueId = 2;
+  string data = 3; // this will probably just be json
+}
+
+// Confirm message
+message ConfirmMessageRequest {
   string queueId = 1;
-  string data = 2; // this will probably just be json
+  string messageId = 2;
+}
+
+message ConfirmMessageResponse {
+  bool success = 1;
+  string info = 2;
 }
