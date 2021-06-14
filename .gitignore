@@ -1,8 +1,9 @@
 # compiled output
-/dist
-/node_modules
+**/dist
+**/node_modules/
 
 # protobuf compiled
+**/proto/gen/
 
 # Logs
 logs

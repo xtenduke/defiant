@@ -1,16 +1,16 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import {PackageDefinition} from "@grpc/grpc-js/build/src/make-client";
-import {ProtoGrpcType} from "../proto/route_client_queue";
-import {AddMessageResponse} from "../proto/client_queue/AddMessageResponse";
-import {AddMessageRequest} from "../proto/client_queue/AddMessageRequest";
-import {UnicastMessageRequest} from "../proto/client_queue/UnicastMessageRequest";
-import {UnicastMessage} from "../proto/client_queue/UnicastMessage";
+import {ProtoGrpcType} from "../proto/gen/route_client_queue";
+import {AddMessageResponse} from "../proto/gen/client_queue/AddMessageResponse";
+import {AddMessageRequest} from "../proto/gen/client_queue/AddMessageRequest";
+import {UnicastMessageRequest} from "../proto/gen/client_queue/UnicastMessageRequest";
+import {UnicastMessage} from "../proto/gen/client_queue/UnicastMessage";
 import {ServerUnaryCall, ServerWritableStream} from "@grpc/grpc-js";
 import {Logger} from "./util/Logger";
-import {QueueHandlers} from "../proto/client_queue/Queue";
-import {ConfirmMessageRequest} from "../proto/client_queue/ConfirmMessageRequest";
-import {ConfirmMessageResponse} from "../proto/client_queue/ConfirmMessageResponse";
+import {QueueHandlers} from "../proto/gen/client_queue/Queue";
+import {ConfirmMessageRequest} from "../proto/gen/client_queue/ConfirmMessageRequest";
+import {ConfirmMessageResponse} from "../proto/gen/client_queue/ConfirmMessageResponse";
 import * as crypto from "crypto";
 
 export interface Message extends AddMessageRequest {
@@ -301,5 +301,4 @@ export class RPCServer {
                 }
             });
     }
-
 }
