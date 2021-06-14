@@ -20,6 +20,11 @@ export interface Message extends AddMessageRequest {
     attempts?: number;
 }
 
+export interface QueueListener {
+    id: string;
+    stream: ServerWritableStream<UnicastMessageRequest, UnicastMessage>;
+}
+
 export class RPCServer {
     private readonly MESSAGE_SEND_MAX_ATTEMPTS = 5;
     private readonly MESSAGE_SEND_BASE_DELAY = 30000;
@@ -27,7 +32,7 @@ export class RPCServer {
     private readonly packageDefinition: PackageDefinition;
     private readonly proto: ProtoGrpcType;
 
-    private readonly listeners: Map<string, Array<ServerWritableStream<UnicastMessageRequest, UnicastMessage>>>;
+    private readonly listeners: Map<string, Array<QueueListener>>;
     private readonly queuedMessages: Array<Message>;
     private readonly unconfirmedMessages: Map<string, Message>;
     private processing: boolean;
@@ -96,9 +101,41 @@ export class RPCServer {
             queueListeners = [];
         }
 
-        queueListeners.push(call);
+        const listenerId = crypto.randomUUID();
+
+        const closeListener = (error?: Error) => {
+            if (error) {
+                Logger.log(`[CloseListener] called for listener on queue ${queueId} with error`, error)
+            } else {
+                Logger.log(`[CloseListener] called for listener on queue ${queueId}`);
+            }
+            this.RemoveListener(queueId, listenerId);
+        };
+
+        call.on('finish', closeListener);
+        call.on('error', closeListener);
+        call.on('close', closeListener)
+        // call.on('drain', closeListener); todo: support task drain?
+
+        queueListeners.push({ stream: call, id: listenerId });
         this.listeners.set(queueId, queueListeners);
         // not going to call `call.end();` as we will wait for the connection to die, or the client to close
+    }
+
+    private RemoveListener(queueId: string, listenerId: string) {
+        const queueListeners = this.listeners.get(queueId);
+        if (queueListeners && queueListeners.length > 0) {
+            const index = queueListeners.findIndex((listener) => listener.id === listenerId);
+            if (index > -1) {
+                queueListeners.splice(index, 1);
+                this.listeners.set(queueId, queueListeners);
+                Logger.log(`[RemoveListener] removed listener for queue ${queueId}`);
+            } else {
+                Logger.log(`[RemoveListener] couldn't find listener to remove for queue ${queueId}`);
+            }
+        } else {
+            Logger.log(`[RemoveListener] no listeners for queue queue ${queueId}`);
+        }
     }
 
     private ConfirmMessage(
@@ -150,48 +187,63 @@ export class RPCServer {
         await this.processNext();
     }
 
+    public GetListenerForQueue(queueId: string): QueueListener | undefined {
+        const listeners = this.listeners.get(queueId);
+        const random = listeners.length > 1 ? Math.floor(Math.random() * listeners.length) : 0;
+        const listener = listeners[random];
+        if (listener && (!listener.stream.writable || listener.stream.cancelled || listener.stream.destroyed)) {
+            this.RemoveListener(queueId, listener.id);
+            return this.GetListenerForQueue(queueId);
+        } else {
+            return listener;
+        }
+    }
+
     private async processNext() {
         const message = this.queuedMessages.shift();
+
         if (message) {
-            const listeners = this.listeners.get(message.queueId);
-            // pick a random listener to send to
-            const random = Math.floor(Math.random() * listeners.length); // can probably think of a more clever way to do this
-            // listeners could be weighted
-            const listener = listeners[random];
+            const listener = this.GetListenerForQueue(message.queueId);
             if (!listener) {
                 Logger.log(`[ProcessNext] no listener found for queueId: ${message.queueId}, discarding`);
                 // TODO: add to DLQ
+                return;
             } else if (message.attempts === this.MESSAGE_SEND_MAX_ATTEMPTS) {
                 Logger.log(`[ProcessNext] message hit max attempts, discarding`, message);
                 // TODO: add to DLQ
+                return;
             } else {
-                Logger.log(`[ProcessNext] write message for queueId: ${message.queueId} to listener ${message.queueId}:${random}`);
+                Logger.log(`[ProcessNext] write message for queueId: ${message.queueId} to listener ${message.queueId}:${listener.id}`);
             }
 
             message.attempts += 1;
             message.sentAt = new Date();
 
-            listener.write(message, (error) => {
+            listener.stream.write(message, (error) => {
                 if (error) {
-                    Logger.log(`[ProcessNext] message send failed`, error);
+                    Logger.log(`[ProcessNext] message send failed`, error, message);
                     // add back to queue for re-send
                     this.queuedMessages.push(message);
                 } else {
-                    Logger.log(`[ProcessNext] message send succeeded`);
-                    this.unconfirmedMessages.set(message.id, message); // add me to unconfirmed messages
-
-                    setTimeout(async () => {
-                        // check confirmed
-                        await this.checkDeliveryReceiptOrQueue(message.id);
-                    }, this.MESSAGE_SEND_BASE_DELAY * message.attempts);
+                    Logger.log(`[ProcessNext] message send succeeded`, message);
                 }
             });
+
+            // Handle delivery management outside of callback
+            this.unconfirmedMessages.set(message.id, message); // add me to unconfirmed messages
+            const time = this.MESSAGE_SEND_BASE_DELAY * message.attempts;
+            Logger.debug(`[ProcessNext] queued delivery check for ${time}ms`, message)
+            setTimeout(async () => {
+                // check confirmed
+                Logger.debug(`[ProcessNext] running delivery check`, message);
+                await this.checkDeliveryReceiptOrQueue(message.id);
+            }, time);
         }
 
         if (this.processing) {
             setTimeout(async () => {
                 await this.processNext();
-            }, 0);
+            });
         }
     }
 
@@ -204,14 +256,27 @@ export class RPCServer {
     private async checkDeliveryReceiptOrQueue(messageId: string): Promise<void> {
         const unconfirmedMessage = this.unconfirmedMessages.get(messageId);
         if (unconfirmedMessage) {
+            Logger.debug(`[CheckDeliveryReceiptOrQueue] unconfirmed delivery, re-queuing`, messageId);
             this.unconfirmedMessages.delete(messageId);
             this.queuedMessages.push(unconfirmedMessage);
+        } else {
+            Logger.debug(`[CheckDeliveryReceiptOrQueue] confirmed delivery`, messageId);
         }
     }
 
     public async startServer(): Promise<void> {
         Logger.log('Start server on port:', this.port);
-        const server = new grpc.Server();
+        const server = new grpc.Server({
+            'grpc.keepalive_time_ms': 5000,
+            'grpc.keepalive_timeout_ms': 5000,
+            'grpc.grpc.max_connection_idle_ms': 5000,
+            'grpc.keepalive_permit_without_calls': 1,
+            'grpc.http2.max_pings_without_data': 2000000,
+            'grpc.http2.max_ping_strikes': 1,
+            // 'grpc.http2.min_sent_ping_interval_without_data_ms': 5000,
+            // 'grpc.http2.min_time_between_pings_ms': 10000,
+            // 'grpc.http2.min_ping_interval_without_data_ms': 5000
+        });
         // todo: imporve typing here
         const functions: QueueHandlers = {
             AddMessage: this.AddMessage.bind(this),
@@ -237,9 +302,4 @@ export class RPCServer {
             });
     }
 
-    public async stopProcessing() {
-        this.processing = false;
-    }
-
-    // graceful shutdown would be nice too
 }
