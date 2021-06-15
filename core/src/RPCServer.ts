@@ -1,17 +1,17 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
-import {PackageDefinition} from "@grpc/grpc-js/build/src/make-client";
-import {ProtoGrpcType} from "../proto/gen/route_client_queue";
-import {AddMessageResponse} from "../proto/gen/client_queue/AddMessageResponse";
-import {AddMessageRequest} from "../proto/gen/client_queue/AddMessageRequest";
-import {UnicastMessageRequest} from "../proto/gen/client_queue/UnicastMessageRequest";
-import {UnicastMessage} from "../proto/gen/client_queue/UnicastMessage";
-import {ServerUnaryCall, ServerWritableStream} from "@grpc/grpc-js";
-import {Logger} from "./util/Logger";
-import {QueueHandlers} from "../proto/gen/client_queue/Queue";
-import {ConfirmMessageRequest} from "../proto/gen/client_queue/ConfirmMessageRequest";
-import {ConfirmMessageResponse} from "../proto/gen/client_queue/ConfirmMessageResponse";
-import * as crypto from "crypto";
+import {PackageDefinition} from '@grpc/grpc-js/build/src/make-client';
+import {ProtoGrpcType} from '../proto/gen/route_client_queue';
+import {AddMessageResponse} from '../proto/gen/client_queue/AddMessageResponse';
+import {AddMessageRequest} from '../proto/gen/client_queue/AddMessageRequest';
+import {UnicastMessageRequest} from '../proto/gen/client_queue/UnicastMessageRequest';
+import {UnicastMessage} from '../proto/gen/client_queue/UnicastMessage';
+import {ServerUnaryCall, ServerWritableStream} from '@grpc/grpc-js';
+import {Logger} from './util/Logger';
+import {QueueHandlers} from '../proto/gen/client_queue/Queue';
+import {ConfirmMessageRequest} from '../proto/gen/client_queue/ConfirmMessageRequest';
+import {ConfirmMessageResponse} from '../proto/gen/client_queue/ConfirmMessageResponse';
+import * as crypto from 'crypto';
 
 export interface Message extends AddMessageRequest {
     id: string;
@@ -92,7 +92,7 @@ export class RPCServer {
         const queueId = call.request.queueId;
         if (!queueId) {
             // no error handling for the moment
-            Logger.error('[ListenToMessages] called without a queue id')
+            Logger.error('[ListenToMessages] called without a queue id');
             call.end();
         }
 
@@ -105,7 +105,7 @@ export class RPCServer {
 
         const closeListener = (error?: Error) => {
             if (error) {
-                Logger.log(`[CloseListener] called for listener on queue ${queueId} with error`, error)
+                Logger.log(`[CloseListener] called for listener on queue ${queueId} with error`, error);
             } else {
                 Logger.log(`[CloseListener] called for listener on queue ${queueId}`);
             }
@@ -114,7 +114,7 @@ export class RPCServer {
 
         call.on('finish', closeListener);
         call.on('error', closeListener);
-        call.on('close', closeListener)
+        call.on('close', closeListener);
         // call.on('drain', closeListener); todo: support task drain?
 
         queueListeners.push({ stream: call, id: listenerId });
@@ -170,9 +170,9 @@ export class RPCServer {
         // complete
         this.unconfirmedMessages.delete(messageId);
 
-         callback(null, {
-             info: `Confirmed message: ${messageId}`,
-             success: true,
+        callback(null, {
+            info: `Confirmed message: ${messageId}`,
+            success: true,
         });
     }
 
@@ -209,7 +209,7 @@ export class RPCServer {
                 // TODO: add to DLQ
                 return;
             } else if (message.attempts === this.MESSAGE_SEND_MAX_ATTEMPTS) {
-                Logger.log(`[ProcessNext] message hit max attempts, discarding`, message);
+                Logger.log('[ProcessNext] message hit max attempts, discarding', message);
                 // TODO: add to DLQ
                 return;
             } else {
@@ -221,21 +221,21 @@ export class RPCServer {
 
             listener.stream.write(message, (error) => {
                 if (error) {
-                    Logger.log(`[ProcessNext] message send failed`, error, message);
+                    Logger.log('[ProcessNext] message send failed', error, message);
                     // add back to queue for re-send
                     this.queuedMessages.push(message);
                 } else {
-                    Logger.log(`[ProcessNext] message send succeeded`, message);
+                    Logger.log('[ProcessNext] message send succeeded', message);
                 }
             });
 
             // Handle delivery management outside of callback
             this.unconfirmedMessages.set(message.id, message); // add me to unconfirmed messages
             const time = this.MESSAGE_SEND_BASE_DELAY * message.attempts;
-            Logger.debug(`[ProcessNext] queued delivery check for ${time}ms`, message)
+            Logger.debug(`[ProcessNext] queued delivery check for ${time}ms`, message);
             setTimeout(async () => {
                 // check confirmed
-                Logger.debug(`[ProcessNext] running delivery check`, message);
+                Logger.debug('[ProcessNext] running delivery check', message);
                 await this.checkDeliveryReceiptOrQueue(message.id);
             }, time);
         }
@@ -256,11 +256,11 @@ export class RPCServer {
     private async checkDeliveryReceiptOrQueue(messageId: string): Promise<void> {
         const unconfirmedMessage = this.unconfirmedMessages.get(messageId);
         if (unconfirmedMessage) {
-            Logger.debug(`[CheckDeliveryReceiptOrQueue] unconfirmed delivery, re-queuing`, messageId);
+            Logger.debug('[CheckDeliveryReceiptOrQueue] unconfirmed delivery, re-queuing', messageId);
             this.unconfirmedMessages.delete(messageId);
             this.queuedMessages.push(unconfirmedMessage);
         } else {
-            Logger.debug(`[CheckDeliveryReceiptOrQueue] confirmed delivery`, messageId);
+            Logger.debug('[CheckDeliveryReceiptOrQueue] confirmed delivery', messageId);
         }
     }
 
