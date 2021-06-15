@@ -1,25 +1,35 @@
-import express, { Express } from "express";
-import {RPCServer} from "./RPCServer";
-import {Logger} from "./util/Logger";
+import express, { Express } from 'express';
+import {Config, RPCServer} from './RPCServer';
+import {Logger} from './util/Logger';
+import dotenv from 'dotenv';
 
 export class Server {
     private readonly express: Express;
     private readonly rpcServer: RPCServer;
 
     constructor() {
+
         this.express = express();
-        this.rpcServer = new RPCServer(8080);
+
+        const config: Config = {
+            messageMaxSendAttempts: parseInt(process.env.MAX_SEND_ATTEMPTS),
+            messageBaseRetryDelay: parseInt(process.env.BASE_RETRY_DELAY_MS),
+            port: parseInt(process.env.CLIENT_RPC_PORT),
+            grpcServerConfig: JSON.parse(process.env.GRPC_SERVER_CONFIG),
+        };
+
+        this.rpcServer = new RPCServer(
+            config
+        );
     }
 
     public async run() {
-        this.registerRoutes(this.express)
+        this.registerRoutes(this.express);
         await this.startRPCServer();
     }
 
     private registerRoutes(express: Express) {
-        express.get('/', (_, response) => {
-            response.send('Hello world');
-        });
+
     }
 
     private async startRPCServer() {
@@ -64,6 +74,7 @@ export class Server {
      */
 }
 
+dotenv.config();
 const server = new Server();
 
 server.run().then(() => {
@@ -71,4 +82,4 @@ server.run().then(() => {
 }).catch((err: Error) => {
     Logger.error('defiant died', err);
     process.exit(1);
-})
+});
