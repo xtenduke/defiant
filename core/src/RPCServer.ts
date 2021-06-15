@@ -25,10 +25,15 @@ export interface QueueListener {
     stream: ServerWritableStream<UnicastMessageRequest, UnicastMessage>;
 }
 
+export interface Config {
+    messageMaxSendAttempts: number;
+    messageBaseRetryDelay: number;
+    port: number;
+    grpcServerConfig: grpc.ChannelOptions;
+}
+
 export class RPCServer {
-    private readonly MESSAGE_SEND_MAX_ATTEMPTS = 5;
-    private readonly MESSAGE_SEND_BASE_DELAY = 30000;
-    private readonly CLIENT_QUEUE_PROTO_PATH = './proto/route_client_queue.proto';
+    private readonly CLIENT_QUEUE_PROTO_PATH = '../proto/route_client_queue.proto';
     private readonly packageDefinition: PackageDefinition;
     private readonly proto: ProtoGrpcType;
 
@@ -37,7 +42,7 @@ export class RPCServer {
     private readonly unconfirmedMessages: Map<string, Message>;
     private processing: boolean;
 
-    public constructor(private readonly port: number) {
+    public constructor(private readonly config: Config) {
         this.packageDefinition = protoLoader.loadSync(this.CLIENT_QUEUE_PROTO_PATH);
         this.proto = grpc.loadPackageDefinition(this.packageDefinition) as unknown as ProtoGrpcType;
         this.listeners = new Map();
@@ -208,7 +213,7 @@ export class RPCServer {
                 Logger.log(`[ProcessNext] no listener found for queueId: ${message.queueId}, discarding`);
                 // TODO: add to DLQ
                 return;
-            } else if (message.attempts === this.MESSAGE_SEND_MAX_ATTEMPTS) {
+            } else if (message.attempts === this.config.messageMaxSendAttempts) {
                 Logger.log('[ProcessNext] message hit max attempts, discarding', message);
                 // TODO: add to DLQ
                 return;
@@ -231,7 +236,7 @@ export class RPCServer {
 
             // Handle delivery management outside of callback
             this.unconfirmedMessages.set(message.id, message); // add me to unconfirmed messages
-            const time = this.MESSAGE_SEND_BASE_DELAY * message.attempts;
+            const time = this.config.messageBaseRetryDelay * message.attempts;
             Logger.debug(`[ProcessNext] queued delivery check for ${time}ms`, message);
             setTimeout(async () => {
                 // check confirmed
@@ -265,18 +270,8 @@ export class RPCServer {
     }
 
     public async startServer(): Promise<void> {
-        Logger.log('Start server on port:', this.port);
-        const server = new grpc.Server({
-            'grpc.keepalive_time_ms': 5000,
-            'grpc.keepalive_timeout_ms': 5000,
-            'grpc.grpc.max_connection_idle_ms': 5000,
-            'grpc.keepalive_permit_without_calls': 1,
-            'grpc.http2.max_pings_without_data': 2000000,
-            'grpc.http2.max_ping_strikes': 1,
-            // 'grpc.http2.min_sent_ping_interval_without_data_ms': 5000,
-            // 'grpc.http2.min_time_between_pings_ms': 10000,
-            // 'grpc.http2.min_ping_interval_without_data_ms': 5000
-        });
+        Logger.log('Start server on port:', this.config.port);
+        const server = new grpc.Server(JSON.parse(process.env.GRPC_SERVER_CONFIG));
         // todo: imporve typing here
         const functions: QueueHandlers = {
             AddMessage: this.AddMessage.bind(this),
@@ -286,7 +281,7 @@ export class RPCServer {
         server.addService(this.proto.client_queue.Queue.service, functions);
 
         server.bindAsync(
-            `0.0.0.0:${this.port}`,
+            `0.0.0.0:${this.config.port}`,
             grpc.ServerCredentials.createInsecure(),
             (err: Error | null, port: number) => {
                 if (err) {
