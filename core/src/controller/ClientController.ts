@@ -1,17 +1,18 @@
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
-import {PackageDefinition} from '@grpc/grpc-js/build/src/make-client';
-import {ProtoGrpcType} from '../proto/gen/route_client_queue';
-import {AddMessageResponse} from '../proto/gen/client_queue/AddMessageResponse';
-import {AddMessageRequest} from '../proto/gen/client_queue/AddMessageRequest';
-import {UnicastMessageRequest} from '../proto/gen/client_queue/UnicastMessageRequest';
-import {UnicastMessage} from '../proto/gen/client_queue/UnicastMessage';
-import {ServerUnaryCall, ServerWritableStream} from '@grpc/grpc-js';
-import {Logger} from './util/Logger';
-import {QueueHandlers} from '../proto/gen/client_queue/Queue';
-import {ConfirmMessageRequest} from '../proto/gen/client_queue/ConfirmMessageRequest';
-import {ConfirmMessageResponse} from '../proto/gen/client_queue/ConfirmMessageResponse';
+import {ProtoGrpcType} from '../../proto/gen/route_client_queue';
+import {AddMessageResponse} from '../../proto/gen/client_queue/AddMessageResponse';
+import {AddMessageRequest} from '../../proto/gen/client_queue/AddMessageRequest';
+import {UnicastMessageRequest} from '../../proto/gen/client_queue/UnicastMessageRequest';
+import {UnicastMessage} from '../../proto/gen/client_queue/UnicastMessage';
+import {ServerUnaryCall, ServerWritableStream, ServiceDefinition} from '@grpc/grpc-js';
+import {Logger} from '../util/Logger';
+import {QueueDefinition, QueueHandlers} from '../../proto/gen/client_queue/Queue';
+import {ConfirmMessageRequest} from '../../proto/gen/client_queue/ConfirmMessageRequest';
+import {ConfirmMessageResponse} from '../../proto/gen/client_queue/ConfirmMessageResponse';
 import * as crypto from 'crypto';
+import {BaseRPCController} from '../base/BaseRPCController';
+import {Server} from './Server';
 
 export interface Message extends AddMessageRequest {
     id: string;
@@ -28,23 +29,19 @@ export interface QueueListener {
 export interface Config {
     messageMaxSendAttempts: number;
     messageBaseRetryDelay: number;
-    port: number;
-    grpcServerConfig: grpc.ChannelOptions;
 }
 
-export class RPCServer {
-    private readonly CLIENT_QUEUE_PROTO_PATH = '../proto/route_client_queue.proto';
-    private readonly packageDefinition: PackageDefinition;
-    private readonly proto: ProtoGrpcType;
-
+export class ClientController extends BaseRPCController<QueueHandlers> {
     private readonly listeners: Map<string, Array<QueueListener>>;
     private readonly queuedMessages: Array<Message>;
     private readonly unconfirmedMessages: Map<string, Message>;
     private processing: boolean;
 
-    public constructor(private readonly config: Config) {
-        this.packageDefinition = protoLoader.loadSync(this.CLIENT_QUEUE_PROTO_PATH);
-        this.proto = grpc.loadPackageDefinition(this.packageDefinition) as unknown as ProtoGrpcType;
+    public constructor(
+        protected readonly config: Config,
+        protected readonly server: Server
+    ) {
+        super(server);
         this.listeners = new Map();
         this.queuedMessages = [];
         this.unconfirmedMessages = new Map();
@@ -269,31 +266,19 @@ export class RPCServer {
         }
     }
 
-    public async startServer(): Promise<void> {
-        Logger.log('Start server on port:', this.config.port);
-        const server = new grpc.Server(JSON.parse(process.env.GRPC_SERVER_CONFIG));
-        // todo: imporve typing here
-        const functions: QueueHandlers = {
+    protected getService(): ServiceDefinition<QueueDefinition> {
+        const packageDefinition = protoLoader.loadSync('../proto/route_client_queue.proto');
+        // typing from grpc-js sucks
+        const protoService = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
+        return protoService.client_queue.Queue.service;
+    }
+
+    protected getHandlers(): QueueHandlers {
+        return {
             AddMessage: this.AddMessage.bind(this),
             ListenForMessages: this.ListenToMessages.bind(this),
             ConfirmMessage: this.ConfirmMessage.bind(this),
         };
-        server.addService(this.proto.client_queue.Queue.service, functions);
-
-        server.bindAsync(
-            `0.0.0.0:${this.config.port}`,
-            grpc.ServerCredentials.createInsecure(),
-            (err: Error | null, port: number) => {
-                if (err) {
-                    Logger.error('error starting server:', err.message);
-                    throw err;
-                } else {
-                    Logger.debug('Server bound on port', port);
-                    server.start();
-
-                    // yuck
-                    this.processMessages();
-                }
-            });
     }
+
 }
