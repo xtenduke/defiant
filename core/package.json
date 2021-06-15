@@ -8,7 +8,7 @@
   "scripts": {
     "server:build:proto": "yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/gen/ ../proto/*.proto\n",
     "server:build": "rm -rf dist && yarn server:build:proto && tsc && cp ../proto/**.proto dist/proto",
-    "server:start": "node ./dist/src/Server.js",
+    "server:start": "node ./dist/src/Application.js",
     "server:start:dev": "yarn server:build && yarn server:start --watch",
     "server:lint": "eslint -c .eslintrc.json \"{src,apps,libs,test}/**/*.ts\""
   },
