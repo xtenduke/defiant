@@ -1,5 +1,5 @@
 import {ServiceDefinition, UntypedServiceImplementation} from '@grpc/grpc-js';
-import {Server} from '../controller/Server';
+import {Server} from '../core/Server';
 
 export abstract class BaseRPCController<T extends UntypedServiceImplementation> {
     protected constructor(
