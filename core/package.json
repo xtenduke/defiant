@@ -8,9 +8,13 @@
   "scripts": {
     "server:build:proto": "yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/gen/ ../proto/*.proto\n",
     "server:build": "rm -rf dist && yarn server:build:proto && tsc && cp ../proto/**.proto dist/proto",
-    "server:start": "node ./dist/src/Application.js",
-    "server:start:dev": "yarn server:build && yarn server:start --watch",
-    "server:lint": "eslint -c .eslintrc.json \"{src,apps,libs,test}/**/*.ts\""
+    "server:start:0": "node ./dist/src/Application.js ",
+    "server:start:1": "CLIENT_RPC_PORT=8081 node ./dist/src/Application.js",
+    "server:start:2": "CLIENT_RPC_PORT=8082 node ./dist/src/Application.js",
+    "server:start:3": "CLIENT_RPC_PORT=8083 node ./dist/src/Application.js",
+    "server:start:dev": "yarn server:build && yarn server:start:0 --watch",
+    "server:lint": "eslint -c .eslintrc.json \"{src,apps,libs,test}/**/*.ts\"",
+    "cluster:server:start": "yarn server:build && yarn concurrently \"yarn server:start:0\" \"yarn server:start:1\" \"yarn server:start:2\" \"yarn server:start:3\""
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.3.2",
@@ -23,6 +27,7 @@
     "@types/node": "^14.14.36",
     "@typescript-eslint/eslint-plugin": "^4.27.0",
     "@typescript-eslint/parser": "^4.27.0",
+    "concurrently": "^6.2.0",
     "eslint": "^7.22.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",

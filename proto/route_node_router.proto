@@ -1,0 +1,21 @@
+syntax = "proto3";                                                                                                                                                                                                                                          option java_multiple_files = true;                                                                                            option java_package = "io.grpc.examples.helloworld";                                                                          option java_outer_classname = "HelloWorldProto";
+option objc_class_prefix = "HLW";
+
+package node_router;
+
+// node service definition (consumed by nodes)
+service Node {
+  rpc Interrogate(InterrogateRequest) returns (InterrogateResponse) {}
+}
+
+message InterrogateRequest {
+  string nodeId = 1;
+}
+
+message InterrogateResponse {
+  bool success = 1;
+  string message = 2;
+  string nodeId = 3;
+  bool isMaster = 4;
+}
+
