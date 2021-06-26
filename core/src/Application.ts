@@ -95,7 +95,7 @@ export class Application {
         await this.queueService.processMessages();
 
         // begin node interrogation
-        await this.clusterManager.testInterrogate();
+        await this.clusterManager.start();
     }
 }
 

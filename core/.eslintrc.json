@@ -32,6 +32,7 @@
             "error",
             "always"
         ],
-        "no-explicit-any": "off"
+        "no-explicit-any": "off",
+        "@typescript-eslint/ban-ts-comment": "off"
     }
 }
