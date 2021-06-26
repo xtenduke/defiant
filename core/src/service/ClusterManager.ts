@@ -1,14 +1,19 @@
 import {ClusterConfig} from './NodeService';
 import {NodeLinkClient} from '../client/NodeClient';
 import {Logger} from '../util/Logger';
+import {BaseRPCClientConfig} from '../client/BaseRPCClient';
 
 export class ClusterManager {
     private readonly clients: NodeLinkClient[];
 
-    public constructor(private readonly config: ClusterConfig, private readonly currentNodeId: string, ) {
+    public constructor(
+        private readonly clientConfig: BaseRPCClientConfig,
+        private readonly config: ClusterConfig,
+        private readonly currentNodeId: string
+    ) {
         // construct clients
         this.clients = config.nodes.filter((nodeConfig) => !nodeConfig.isSelf).map((nodeConfig) => {
-            return new NodeLinkClient(nodeConfig, currentNodeId);
+            return new NodeLinkClient(clientConfig, nodeConfig, currentNodeId);
         });
     }
 

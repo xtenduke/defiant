@@ -4,7 +4,7 @@
   "description": "",
   "author": "Jake Laurie",
   "private": false,
-  "license": "Apache",
+  "license": "Apache-2.0",
   "scripts": {
     "test:grpc": "tsc && node ./dist/ClientQueueTest.js"
   },

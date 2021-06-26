@@ -7,31 +7,28 @@ import {Logger} from '../util/Logger';
 import {InterrogateResponse} from '../../proto/gen/node_router/InterrogateResponse';
 import {InterrogateRequest} from '../../proto/gen/node_router/InterrogateRequest';
 import {EventLoop} from '../util/EventLoop';
+import {BaseRPCClient, BaseRPCClientConfig} from './BaseRPCClient';
 
-export class NodeLinkClient {
+export class NodeLinkClient extends BaseRPCClient {
     private readonly client: NodeClient;
 
-    public constructor(private readonly config: Node, private readonly nodeId: string) {
+    public constructor(
+        protected readonly clientConfig: BaseRPCClientConfig,
+        protected readonly nodeConfig: Node,
+        private readonly nodeId: string
+    ) {
+        super(clientConfig);
         const packageDefinition = protoLoader.loadSync('../proto/route_node_router.proto');
         const protoService = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
         this.client = new protoService.node_router.Node(
-            `${config.host}:${config.port}`, grpc.credentials.createInsecure(), {
-                'grpc.keepalive_time_ms': 30000, // must be less than max total backoff
-                'grpc.keepalive_timeout_ms': 5000, // time to wait for pong
-                'grpc.keepalive_permit_without_calls': 1, // send keepalive even if there are no actual calls
-                'grpc.http2.max_pings_without_data': 0,
-            });
-
+            `${nodeConfig.host}:${nodeConfig.port}`, grpc.credentials.createInsecure(), this.getGRPCConfig());
     }
 
     public getIdentity(): string {
-        return `${this.config.host}:${this.config.port}`;
+        return `${this.nodeConfig.host}:${this.nodeConfig.port}`;
     }
 
     public async interrogate(attempt = 1): Promise<InterrogateResponse> {
-        if (attempt > 1) {
-            Logger.log(`Client interrogate to node at ${this.config.host}:${this.config.port}, begin retry ${attempt}`);
-        }
         const maxAttempts = 100;
         const interrogateRequest = {
             nodeId: this.nodeId,
@@ -41,11 +38,11 @@ export class NodeLinkClient {
             return await this.fireInterrogateRequest(interrogateRequest, attempt);
         } catch (e) {
             if (maxAttempts === attempt) {
-                throw new Error(`Client interrogate to node at ${this.config.host}:${this.config.port}, failed at max attempts`);
+                throw new Error(`[Linkclient] Client interrogate to node at ${this.nodeConfig.host}:${this.nodeConfig.port}, failed at max attempts`);
             } else {
-                Logger.log(`Client interrogate to node at ${this.config.host}:${this.config.port}, retry attempt ${attempt}`);
+                Logger.debug(`[LinkClient] Waiting for ${this.nodeConfig.host}:${this.nodeConfig.port} to come up, retry attempt ${attempt}`);
                 await EventLoop.sleep(10 ** attempt);
-                return await this.interrogate(attempt += 1);
+                return await this.interrogate(attempt + 1);
             }
         }
     }
@@ -54,17 +51,13 @@ export class NodeLinkClient {
         return new Promise((resolve, reject) => {
             this.client.Interrogate(request, { deadline: this.getDeadline() }, (err, response) => {
                 if (err) {
-                    Logger.error(`Client interrogate to node at ${this.config.host}:${this.config.port}, attempt ${attempt} failed with error`, err);
+                    Logger.debug(`[LinkClient] Client interrogate to node at ${this.nodeConfig.host}:${this.nodeConfig.port}, attempt ${attempt} failed with error`, err);
                     reject(err);
                 } else {
-                    Logger.log(`Client interrogate to node at ${this.config.host}:${this.config.port} attempt ${attempt} succeeded with`, response);
+                    Logger.debug(`[LinkClient] Client interrogate to node at ${this.nodeConfig.host}:${this.nodeConfig.port} attempt ${attempt} succeeded with`, response);
                     resolve(response);
                 }
             });
         });
-    }
-
-    private getDeadline(time = 10000) {
-        return new Date(Date.now() + time);
     }
 }

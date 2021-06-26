@@ -7,6 +7,7 @@ import {randomUUID} from 'crypto';
 import {NodeController} from './controller/NodeController';
 import {NodeService} from './service/NodeService';
 import {ClusterManager} from './service/ClusterManager';
+import {JSONSafe} from './util/Json';
 
 export interface ApplicationConfig {
     port: number;
@@ -32,14 +33,16 @@ export class Application {
 
         this.rpcServer = new Server({
             port: parseInt(process.env.CLIENT_RPC_PORT),
-            grpcServerConfig: JSON.parse(process.env.GRPC_SERVER_CONFIG),
+            grpcServerConfig: JSONSafe.parse(process.env.GRPC_CONNECTION_CONFIG),
         });
 
         this.config = {
             port: parseInt(process.env.CLIENT_RPC_PORT),
             nodeId: this.nodeId,
-            cluster: JSON.parse(process.env.CLUSTER)
+            cluster: JSONSafe.parse(process.env.CLUSTER)
         };
+
+        Logger.updateContext({ nodeId: this.nodeId, port: this.config.port });
     }
 
     public async run(): Promise<void> {
@@ -49,7 +52,8 @@ export class Application {
         // bind controllers
         // some DI framework would be quite nice right now
         // config hack until we're containerised
-        const clusterConfig = JSON.parse(process.env.CLUSTER_CONFIG).map((config: {port: number}) => {
+        // JSONSafe should be removed when we have proper configuration loading and DI
+        const clusterConfig = JSONSafe.parse(process.env.CLUSTER_CONFIG).map((config: {port: number}) => {
             return {
                 ...config,
                 isSelf: config.port === this.config.port,
@@ -67,6 +71,7 @@ export class Application {
         );
 
         this.clusterManager = new ClusterManager(
+            {}, //todo: client config overrides
             {
                 nodes: clusterConfig
             },
