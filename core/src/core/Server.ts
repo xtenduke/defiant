@@ -1,10 +1,11 @@
 import {Logger} from '../util/Logger';
 import * as grpc from '@grpc/grpc-js';
 import {ServiceDefinition, UntypedServiceImplementation} from '@grpc/grpc-js';
+import * as Constants from '../util/Constants';
 
 export interface RPCServerConfig {
     port: number;
-    grpcServerConfig: grpc.ChannelOptions;
+    grpcServerConfig?: grpc.ChannelOptions;
 }
 
 export class Server {
@@ -14,7 +15,7 @@ export class Server {
 
     public async start(): Promise<void> {
         Logger.log('Start gRPC on port:', this.config.port);
-        this.server = new grpc.Server(this.config.grpcServerConfig);
+        this.server = new grpc.Server(this.config.grpcServerConfig ?? Constants.GRPC_CONNECTION_CONFIG);
 
         this.server.bindAsync(
             `0.0.0.0:${this.config.port}`,
