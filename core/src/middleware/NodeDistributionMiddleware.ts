@@ -13,7 +13,8 @@ export class NodeDistributionMiddleware {
      */
     public checkNode(request: RequestMetadata): ResponseMetadata | undefined {
         const destination = this.clusterManager.getDestination(request.queueId);
-        if (destination.nodeId !== this.currentNodeId) {
+        // todo: better handle cluster manager inconsistencies
+        if (destination && destination.nodeId !== this.currentNodeId) {
             return {
                 code: Code.REDIRECT,
                 redirect: {

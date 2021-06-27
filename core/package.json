@@ -6,7 +6,7 @@
   "private": false,
   "license": "Apache-2.0",
   "scripts": {
-    "server:build:proto": "yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/gen/ ../proto/*.proto\n",
+    "server:build:proto": "rm -rf proto/gen && yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/gen/ ../proto/*.proto\n",
     "server:build": "rm -rf dist && yarn server:build:proto && tsc && cp ../proto/**.proto dist/proto",
     "server:start:0": "node ./dist/src/Application.js ",
     "server:start:1": "CLIENT_RPC_PORT=8081 node ./dist/src/Application.js",

@@ -36,11 +36,11 @@ export class ClientController extends BaseRPCController<QueueHandlers> {
     ) {
         Logger.log('Request to AddMessage:', call.request);
 
-        if (!call.request.metadata.queueId) {
+        if (!call.request.metadata?.queueId) {
             Logger.error('Someone called [AddMessage] without a queueId');
             callback(undefined, {
                 metadata: {
-                    code: Code.ERROR,
+                    code: Code.REDIRECT,
                     message: 'missing queueId',
                 },
             });
@@ -89,6 +89,12 @@ export class ClientController extends BaseRPCController<QueueHandlers> {
                 call.end();
             });
             return;
+        } else {
+            call.write({
+                metadata: {
+                    code: Code.SUCCESS
+                }
+            });
         }
 
         this.queueService.onListenToMessages(call).catch((err?: Error) => {
