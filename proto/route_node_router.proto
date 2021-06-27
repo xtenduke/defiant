@@ -1,4 +1,4 @@
-syntax = "proto3";                                                                                                                                                                                                                                          option java_multiple_files = true;                                                                                            option java_package = "io.grpc.examples.helloworld";                                                                          option java_outer_classname = "HelloWorldProto";
+syntax = "proto3";
 option objc_class_prefix = "HLW";
 
 package node_router;
@@ -16,6 +16,5 @@ message InterrogateResponse {
   bool success = 1;
   string message = 2;
   string nodeId = 3;
-  bool isMaster = 4;
 }
 

@@ -6,8 +6,9 @@ import {ConfirmMessageRequest} from '../../proto/gen/client_queue/ConfirmMessage
 import {ServerWritableStream} from '@grpc/grpc-js';
 import {UnicastMessageRequest} from '../../proto/gen/client_queue/UnicastMessageRequest';
 import {UnicastMessage} from '../../proto/gen/client_queue/UnicastMessage';
+import {Code} from '../../proto/gen/client_queue/Code';
 
-export interface Message extends AddMessageRequest {
+export interface Message extends UnicastMessage {
     id: string;
     queueId: string;
     sentAt?: Date;
@@ -20,7 +21,9 @@ export interface Config {
 }
 
 export class QueueService {
-    public constructor(private readonly config: Config) {
+    public constructor(
+        private readonly config: Config,
+    ) {
         this.listeners = new Map();
         this.queuedMessages = [];
         this.unconfirmedMessages = new Map();
@@ -51,7 +54,15 @@ export class QueueService {
             message.attempts += 1;
             message.sentAt = new Date();
 
-            listener.stream.write(message, (error) => {
+            const response: UnicastMessage = {
+                id: message.id,
+                data: message.data,
+                metadata: {
+                    code: Code.SUCCESS,
+                }
+            };
+
+            listener.stream.write(response, (error) => {
                 if (error) {
                     Logger.log('[ProcessNext] message send failed', error, message);
                     // add back to queue for re-send
@@ -136,6 +147,10 @@ export class QueueService {
     }
 
     public async onAddMessage(request: AddMessageRequest): Promise<void> {
+        // check I am the correct instance for this queue
+        // otherwise instruct client to connect to correct client
+
+
         // get queue matching queueId
         // validate this message & queue
         const messageId = crypto.randomUUID();
@@ -143,8 +158,8 @@ export class QueueService {
         this.queuedMessages.push({
             id: messageId,
             attempts: 0,
-            queueId: request.queueId,
-            ...request
+            queueId: request.metadata?.queueId,
+            data: request.data,
         });
     }
 
@@ -160,7 +175,7 @@ export class QueueService {
 
     public async onListenToMessages(call: ServerWritableStream<UnicastMessageRequest, UnicastMessage>): Promise<void> {
         // eventually will have to have separate controller to handle listeners...
-        const queueId = call.request.queueId;
+        const queueId = call.request.metadata?.queueId;
         let queueListeners = this.listeners.get(queueId);
         if (!queueListeners) {
             queueListeners = [];

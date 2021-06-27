@@ -17,7 +17,6 @@ export class NodeService {
     public async onInterrogate(request: InterrogateRequest): Promise<InterrogateResponse> {
         return {
             nodeId: this.nodeId,
-            isMaster: false,
         };
     }
 }

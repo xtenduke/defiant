@@ -28,6 +28,10 @@ export class NodeLinkClient extends BaseRPCClient {
         return `${this.nodeConfig.host}:${this.nodeConfig.port}`;
     }
 
+    public getNodeConfig(): Node {
+        return this.nodeConfig;
+    }
+
     public async interrogate(attempt = 1): Promise<InterrogateResponse> {
         const maxAttempts = 100;
         const interrogateRequest = {

@@ -8,6 +8,7 @@ import {NodeController} from './controller/NodeController';
 import {NodeService} from './service/NodeService';
 import {ClusterManager} from './service/ClusterManager';
 import {JSONSafe} from './util/Json';
+import {NodeDistributionMiddleware} from './middleware/NodeDistributionMiddleware';
 
 export interface ApplicationConfig {
     port: number;
@@ -27,6 +28,7 @@ export class Application {
     private nodeService: NodeService;
 
     private clusterManager: ClusterManager;
+    private nodeDistributionMiddleware: NodeDistributionMiddleware;
 
     constructor() {
         this.nodeId = randomUUID();
@@ -78,6 +80,8 @@ export class Application {
             this.nodeId,
         );
 
+        this.nodeDistributionMiddleware = new NodeDistributionMiddleware(this.clusterManager, this.nodeId);
+
         // queue specific stuff
 
         this.queueService = new QueueService(
@@ -90,11 +94,10 @@ export class Application {
         this.clientController = new ClientController(
             this.queueService,
             this.rpcServer,
+            this.nodeDistributionMiddleware,
         );
 
         await this.queueService.processMessages();
-
-        // begin node interrogation
         await this.clusterManager.start();
     }
 }
