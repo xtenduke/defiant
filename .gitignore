@@ -4,6 +4,7 @@
 
 # protobuf compiled
 **/proto/gen/
+core/proto/**.proto
 
 # Logs
 logs

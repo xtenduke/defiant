@@ -18,7 +18,7 @@ export class NodeLinkClient extends BaseRPCClient {
         private readonly nodeId: string
     ) {
         super(clientConfig);
-        const packageDefinition = protoLoader.loadSync('../proto/route_node_router.proto');
+        const packageDefinition = protoLoader.loadSync('dist/proto/route_node_router.proto');
         const protoService = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
         this.client = new protoService.node_router.Node(
             `${nodeConfig.host}:${nodeConfig.port}`, grpc.credentials.createInsecure(), this.getGRPCConfig());

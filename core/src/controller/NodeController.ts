@@ -42,7 +42,7 @@ export class NodeController extends BaseRPCController<NodeHandlers> {
     }
 
     protected getService(): ServiceDefinition<NodeHandlers> {
-        const packageDefinition = protoLoader.loadSync('../proto/route_node_router.proto');
+        const packageDefinition = protoLoader.loadSync('dist/proto/route_node_router.proto');
         const protoService = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
         return protoService.node_router.Node.service;
     }
