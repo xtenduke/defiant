@@ -11,6 +11,11 @@ import {ConfirmMessageResponse} from '../../core/proto/gen/client_queue/ConfirmM
 import {AddMessageRequest} from '../../core/proto/gen/client_queue/AddMessageRequest';
 import {Code} from '../../core/proto/gen/client_queue/Code';
 
+export interface Config {
+    host: string;
+    port: number;
+}
+
 export class ClientQueueTest {
     private addedMessages = 0;
     private receivedMessages = 0;
@@ -18,6 +23,7 @@ export class ClientQueueTest {
     private client: QueueClient;
     private messageStream: grpc.ClientReadableStream<UnicastMessage__Output>;
     private isReady = false;
+    private host: Config;
 
     public constructor(
         private readonly queueId: string,
@@ -25,10 +31,10 @@ export class ClientQueueTest {
     ) {
 
         this.isReady = true;
-        this.client = ClientQueueTest.createClient('localhost', 8080);
+        this.client = this.createClient('localhost', 8080);
     }
 
-    private static createClient(host: string, port: number): QueueClient {
+    private createClient(host: string, port: number): QueueClient {
         const packageDefinition = protoLoader.loadSync(
             path.join(__dirname, '../../../../proto/route_client_queue.proto'),
             {
@@ -41,6 +47,11 @@ export class ClientQueueTest {
 
         const client_queue_proto = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
         const target = `${host}:${port}`;
+
+        this.host = {
+            host,
+            port,
+        };
 
         return new client_queue_proto.client_queue.Queue(target,
             grpc.credentials.createInsecure(), {
@@ -65,12 +76,11 @@ export class ClientQueueTest {
                 return;
             }
 
-            console.log(`[${this.clientId}] Message stream on data` + JSON.stringify(response));
             if (response && Code[response.metadata.code] === Code.SUCCESS) {
-
                 this.isReady = true;
                     if (!response.data) {
                         // just control message
+                        console.log(`[${this.clientId}] has host` + JSON.stringify(this.host));
                         this.sendMessages();
                     } else {
                         this.receivedMessages += 1;
@@ -152,7 +162,7 @@ export class ClientQueueTest {
 
         this.messageStream.destroy();
         this.client.close();
-        this.client = ClientQueueTest.createClient(redirect.host, redirect.port);
+        this.client = this.createClient(redirect.host, redirect.port);
         console.log(`[${this.clientId}] create redirected client`);
         this.listen();
     }
@@ -168,5 +178,3 @@ export class ClientQueueTest {
 
 const client = new ClientQueueTest(process.env.QUEUE_ID, process.env.CLIENT_ID);
 client.listen();
-client.sendMessages();
-
