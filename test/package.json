@@ -6,11 +6,17 @@
   "private": false,
   "license": "Apache-2.0",
   "scripts": {
-    "test:grpc": "tsc && node dist/test/grpc-clients/ClientQueueTest.js"
+    "test:grpc": "tsc && run:1",
+    "test:grpc:cluster": "tsc && yarn concurrently \"yarn run:1\" \"yarn run:1\" \"yarn run:2\" \"yarn run:3\"",
+    "run:1": "QUEUE_ID=queue_one CLIENT_ID=client_one node dist/test/grpc-clients/ClientQueueTest.js",
+    "run:2": "QUEUE_ID=queue_two CLIENT_ID=client_two node dist/test/grpc-clients/ClientQueueTest.js",
+    "run:3": "QUEUE_ID=queue_three CLIENT_ID=client_three node dist/test/grpc-clients/ClientQueueTest.js",
+    "run:4": "QUEUE_ID=queue_four CLIENT_ID=client_four node dist/test/grpc-clients/ClientQueueTest.js"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.3.2",
-    "@grpc/proto-loader": "^0.6.2"
+    "@grpc/proto-loader": "^0.6.2",
+    "concurrently": "^6.2.0"
   },
   "devDependencies": {
     "@types/node": "^14.14.36",

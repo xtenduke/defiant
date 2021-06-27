@@ -166,14 +166,7 @@ export class ClientQueueTest {
     }
 }
 
-const clients = [
-    new ClientQueueTest('queue_one', 'client_one'),
-    new ClientQueueTest('queue_two', 'client_two'),
-    new ClientQueueTest('queue_three', 'client_three'),
-    new ClientQueueTest('queue_four', 'client_four'),
-]
+const client = new ClientQueueTest(process.env.QUEUE_ID, process.env.CLIENT_ID);
+client.listen();
+client.sendMessages();
 
-clients.forEach((client) => {
-    client.listen();
-    client.sendMessages();
-});
