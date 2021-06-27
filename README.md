@@ -23,3 +23,9 @@ $ cd core
 $ yarn install
 $ yarn cluster:server:start
 ```
+
+#### Cluster test
+```
+$ cd test
+$ yarn test:grpc:cluster
+```
