@@ -6,15 +6,20 @@
   "private": false,
   "license": "Apache-2.0",
   "scripts": {
-    "server:build:proto": "rm -rf proto/gen && yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/gen/ ../proto/*.proto\n",
-    "server:build": "rm -rf dist && yarn server:build:proto && tsc && cp ../proto/**.proto dist/proto",
+    "bootstrap": "yarn proto:copy && yarn build:proto && yarn build",
+    "bootstrap:docker": "yarn build:proto && yarn build",
+    "proto:copy": "rm -rf proto && mkdir proto && cp ../proto/**.proto proto/",
+    "build:proto": "yarn proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=proto/gen/ proto/*.proto\n",
+    "build": "rm -rf dist && tsc && cp proto/**.proto dist/proto",
+    "start": "yarn server:start:0",
     "server:start:0": "node ./dist/src/Application.js ",
     "server:start:1": "CLIENT_RPC_PORT=8081 node ./dist/src/Application.js",
     "server:start:2": "CLIENT_RPC_PORT=8082 node ./dist/src/Application.js",
     "server:start:3": "CLIENT_RPC_PORT=8083 node ./dist/src/Application.js",
     "server:start:dev": "yarn server:build && yarn server:start:0 --watch",
     "server:lint": "eslint -c .eslintrc.json \"{src,apps,libs,test}/**/*.ts\"",
-    "cluster:server:start": "yarn server:build && yarn concurrently \"yarn server:start:0\" \"yarn server:start:1\" \"yarn server:start:2\" \"yarn server:start:3\"",
+    "cluster:server:start": "yarn concurrently \"yarn server:start:0\" \"yarn server:start:1\" \"yarn server:start:2\" \"yarn server:start:3\"",
+    "build:image": "rm proto/**.proto && cp ../proto/**.proto proto/ && yarn proto:copy && ./build_and_upload.sh",
     "test": "jest"
   },
   "dependencies": {

@@ -148,7 +148,7 @@ export class ClientController extends BaseRPCController<QueueHandlers> {
     }
 
     protected getService(): ServiceDefinition<QueueDefinition> {
-        const packageDefinition = protoLoader.loadSync('../proto/route_client_queue.proto');
+        const packageDefinition = protoLoader.loadSync('dist/proto/route_client_queue.proto');
         // typing from grpc-js sucks
         const protoService = grpc.loadPackageDefinition(packageDefinition) as unknown as ProtoGrpcType;
         return protoService.client_queue.Queue.service;

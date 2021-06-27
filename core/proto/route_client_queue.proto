@@ -1,0 +1,68 @@
+syntax = "proto3";
+option objc_class_prefix = "HLW";
+
+package client_queue;
+
+message Redirect {
+  string host = 1;
+  int32 port = 2;
+}
+
+enum Code {
+  SUCCESS = 0;
+  REDIRECT = 1;
+  ERROR = 2;
+}
+
+message ResponseMetadata {
+  Code code = 1;
+  string message = 2;
+  Redirect redirect = 3; // in the case this is the incorrect node
+}
+
+message RequestMetadata {
+  string queueId = 1;
+}
+
+// queue service definition (consumed by clients)
+service Queue {
+  // Adds a message to be queued
+  rpc AddMessage(AddMessageRequest) returns (AddMessageResponse) {}
+  rpc ListenForMessages(UnicastMessageRequest) returns (stream UnicastMessage) {}
+  rpc ConfirmMessage(ConfirmMessageRequest) returns (ConfirmMessageResponse) {}
+}
+
+// The request message containing the message data
+message AddMessageRequest {
+  string data = 1; // this will probably just be json
+  RequestMetadata metadata = 2;
+}
+
+// The response message containing queue message add success
+message AddMessageResponse {
+  string id = 1;
+  ResponseMetadata metadata = 2;
+}
+
+// Listen for messages
+// Should this be a standard 'message' type?
+message UnicastMessageRequest {
+  RequestMetadata metadata = 1;
+  string messageId = 2;
+}
+
+message UnicastMessage {
+  string id = 1;
+  ResponseMetadata metadata = 2;
+  string data = 3; // this will probably just be json
+}
+
+// Confirm message
+message ConfirmMessageRequest {
+  RequestMetadata metadata = 1;
+  string messageId = 2;
+}
+
+message ConfirmMessageResponse {
+  ResponseMetadata metadata = 1;
+}
