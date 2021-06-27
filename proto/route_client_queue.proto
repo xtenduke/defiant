@@ -1,7 +1,28 @@
-syntax = "proto3";                                                                                                                                                                                                                                          option java_multiple_files = true;                                                                                            option java_package = "io.grpc.examples.helloworld";                                                                          option java_outer_classname = "HelloWorldProto";
+syntax = "proto3";
 option objc_class_prefix = "HLW";
 
 package client_queue;
+
+message Redirect {
+  string host = 1;
+  int32 port = 2;
+}
+
+enum Code {
+  SUCCESS = 0;
+  REDIRECT = 1;
+  ERROR = 2;
+}
+
+message ResponseMetadata {
+  Code code = 1;
+  string message = 2;
+  Redirect redirect = 3; // in the case this is the incorrect node
+}
+
+message RequestMetadata {
+  string queueId = 1;
+}
 
 // queue service definition (consumed by clients)
 service Queue {
@@ -14,36 +35,34 @@ service Queue {
 // The request message containing the message data
 message AddMessageRequest {
   string data = 1; // this will probably just be json
-  string queueId = 2;
+  RequestMetadata metadata = 2;
 }
 
 // The response message containing queue message add success
 message AddMessageResponse {
   string id = 1;
-  bool success = 2;
-  string info = 3;
+  ResponseMetadata metadata = 2;
 }
 
 // Listen for messages
 // Should this be a standard 'message' type?
 message UnicastMessageRequest {
-  string queueId = 1;
+  RequestMetadata metadata = 1;
   string messageId = 2;
 }
 
 message UnicastMessage {
   string id = 1;
-  string queueId = 2;
+  ResponseMetadata metadata = 2;
   string data = 3; // this will probably just be json
 }
 
 // Confirm message
 message ConfirmMessageRequest {
-  string queueId = 1;
+  RequestMetadata metadata = 1;
   string messageId = 2;
 }
 
 message ConfirmMessageResponse {
-  bool success = 1;
-  string info = 2;
+  ResponseMetadata metadata = 1;
 }
