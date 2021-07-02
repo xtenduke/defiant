@@ -21,6 +21,7 @@ unsupported at the moment
 ```
 $ cd core
 $ yarn install
+$ yarn bootstrap
 $ yarn cluster:server:start
 ```
 
