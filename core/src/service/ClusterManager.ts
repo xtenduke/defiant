@@ -1,64 +1,81 @@
-import {ClusterConfig} from './NodeService';
 import {NodeLinkClient} from '../client/NodeClient';
 import {Logger} from '../util/Logger';
 import {BaseRPCClientConfig} from '../client/BaseRPCClient';
 import HashRing from 'hashring';
-import {InterrogateResponse} from '../../proto/gen/node_router/InterrogateResponse';
+import {Node} from '../model/system/Node';
+import {IDiscoveryService} from './discovery/IDiscoveryService';
 
-export interface ActiveNode {
-    nodeId: string;
-    host: string;
-    port: number;
+export class NodeLink {
+    client: NodeLinkClient;
+    node: Node;
 }
 
 export class ClusterManager {
-    private readonly clients: NodeLinkClient[];
+    private nodeLinks: Map<string, NodeLink>;
     private hashRing: HashRing;
-    private nodes: ActiveNode[];
 
     public constructor(
         private readonly clientConfig: BaseRPCClientConfig,
-        private readonly config: ClusterConfig,
-        private readonly currentNodeId: string
-    ) {
-        // construct clients
-        this.clients = config.nodes.filter((nodeConfig) => !nodeConfig.isSelf).map((nodeConfig) => {
-            return new NodeLinkClient(clientConfig, nodeConfig, currentNodeId);
-        });
-    }
+        private readonly currentNodeId: string,
+        private readonly discoveryService: IDiscoveryService
+    ) {}
 
     public async start(): Promise<void> {
-        this.nodes = await this.interrogate();
-        this.hashRing = this.populateHashRing(this.nodes, this.currentNodeId);
+        this.nodeLinks = await this.discover();
+
+        const nodes = Array.from(this.nodeLinks.values()).map((nodeLink) => nodeLink.node);
+        this.hashRing = this.populateHashRing(nodes, this.currentNodeId);
     }
 
-    private async interrogate(): Promise<ActiveNode[]> {
-        const result = Promise.all(this.clients.map(async (client) => {
-            const interrogation = await client.interrogate();
-            return {
-                nodeId: interrogation.nodeId,
-                host: client.getNodeConfig().host,
-                port: client.getNodeConfig().port,
-            };
-        }));
+    private async discover(): Promise<Map<string, NodeLink>> {
+        const links: Map<string, NodeLink> = new Map();
+        const nodes = await this.discoveryService.discoverNodes();
 
+        for (let node of nodes) {
+            const key = this.getNodeLinkKey(node);
+            let link = links.get(key);
+
+            let client = link?.client;
+            if (!client) {
+                client = new NodeLinkClient(this.clientConfig, node, this.currentNodeId);
+            }
+
+            // interrogate
+            const nodeId = await this.interrogate(client);
+            node.nodeId = nodeId;
+
+            links.set(nodeId, {
+                client,
+                node
+            });
+        }
+
+        return links;
+    }
+
+    private getNodeLinkKey(node: Node): string {
+        return `${node.host}${node.port}`;
+    }
+
+
+    private async interrogate(client: NodeLinkClient): Promise<string> {
+        const interrogation = await client.interrogate();
         Logger.log(`[ClusterManager] interrogate complete on node ${this.currentNodeId}`);
-
-        return result;
+        return interrogation.nodeId;
     }
 
-    private populateHashRing(nodes: InterrogateResponse[], currentNodeId: string): HashRing {
+    private populateHashRing(nodes: Node[], currentNodeId: string): HashRing {
         const nodeIds = nodes.map((node) => node.nodeId);
         nodeIds.push(currentNodeId);
 
         return new HashRing(nodeIds);
     }
 
-    public getDestination(hash: string): ActiveNode {
+    public getDestination(hash: string): Node {
         if (!this.hashRing) {
             throw new Error('Cluster not ready');
         }
         const destinationId = this.hashRing.get(hash);
-        return this.nodes.find((node) => node.nodeId === destinationId);
+        return this.nodeLinks.get(destinationId)?.node;
     }
 }

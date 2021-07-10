@@ -1,15 +1,6 @@
 import {InterrogateResponse} from '../../proto/gen/node_router/InterrogateResponse';
 import {InterrogateRequest} from '../../proto/gen/node_router/InterrogateRequest';
-
-export interface ClusterConfig {
-    nodes: Node[];
-}
-
-export interface Node {
-    host: string;
-    port: number;
-    isSelf: boolean;
-}
+import {ClusterConfig} from '../model/system/Cluster';
 
 export class NodeService {
     public constructor(private readonly config: ClusterConfig, private readonly nodeId: string) {}
