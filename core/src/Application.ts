@@ -9,6 +9,8 @@ import {NodeService} from './service/NodeService';
 import {ClusterManager} from './service/ClusterManager';
 import {JSONSafe} from './util/Json';
 import {NodeDistributionMiddleware} from './middleware/NodeDistributionMiddleware';
+import {IDiscoveryService} from './service/discovery/IDiscoveryService';
+import {DNSDiscoveryService} from './service/discovery/DNSDiscoveryService';
 
 export interface ApplicationConfig {
     port: number;
@@ -28,6 +30,7 @@ export class Application {
     private nodeService: NodeService;
 
     private clusterManager: ClusterManager;
+    private discoveryService: IDiscoveryService;
     private nodeDistributionMiddleware: NodeDistributionMiddleware;
 
     constructor() {
@@ -55,29 +58,27 @@ export class Application {
         // some DI framework would be quite nice right now
         // config hack until we're containerised
         // JSONSafe should be removed when we have proper configuration loading and DI
-        const clusterConfig = JSONSafe.parse(process.env.CLUSTER_CONFIG).map((config: {port: number}) => {
-            return {
-                ...config,
-                isSelf: config.port === this.config.port,
-            };
-        });
+        // const clusterConfig = JSONSafe.parse(process.env.CLUSTER_CONFIG).map((config: {port: number}) => {
+        //     return {
+        //         ...config,
+        //         isSelf: config.port === this.config.port,
+        //     };
+        // });
 
         // cluster comms
-        this.nodeService = new NodeService({
-            nodes: clusterConfig,
-        }, this.nodeId);
+        this.nodeService = new NodeService(this.nodeId);
 
         this.nodeController = new NodeController(
             this.nodeService,
             this.rpcServer,
         );
 
+        this.discoveryService = new DNSDiscoveryService();
+
         this.clusterManager = new ClusterManager(
             {}, //todo: client config overrides
-            {
-                nodes: clusterConfig
-            },
             this.nodeId,
+            this.discoveryService,
         );
 
         this.nodeDistributionMiddleware = new NodeDistributionMiddleware(this.clusterManager, this.nodeId);
