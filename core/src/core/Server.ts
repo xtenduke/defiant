@@ -18,9 +18,10 @@ export class Server {
         this.server = new grpc.Server(this.config.grpcServerConfig ?? Constants.GRPC_CONNECTION_CONFIG);
 
         const port = this.config?.port ?? 8080;
+        Logger.log('port problem?', port);
 
         this.server.bindAsync(
-            `0.0.0.0:${this.config.port}`,
+            `0.0.0.0:${8080}`,
             grpc.ServerCredentials.createInsecure(),
             (err: Error | null, port: number) => {
                 if (err) {
