@@ -17,6 +17,8 @@ export class Server {
         Logger.log('Start gRPC on port:', this.config.port);
         this.server = new grpc.Server(this.config.grpcServerConfig ?? Constants.GRPC_CONNECTION_CONFIG);
 
+        const port = this.config?.port ?? 8080;
+
         this.server.bindAsync(
             `0.0.0.0:${this.config.port}`,
             grpc.ServerCredentials.createInsecure(),

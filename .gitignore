@@ -6,6 +6,9 @@
 **/proto/gen/
 core/proto/**.proto
 
+# out
+**/*.tgz
+
 # Logs
 logs
 *.log
