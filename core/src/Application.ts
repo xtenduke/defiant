@@ -11,6 +11,7 @@ import {JSONSafe} from './util/Json';
 import {NodeDistributionMiddleware} from './middleware/NodeDistributionMiddleware';
 import {IDiscoveryService} from './service/discovery/IDiscoveryService';
 import {DNSDiscoveryService} from './service/discovery/DNSDiscoveryService';
+import express from 'express';
 
 export interface ApplicationConfig {
     port: number;
@@ -101,10 +102,31 @@ export class Application {
         await this.queueService.processMessages();
         await this.clusterManager.start();
     }
+
+    public async healthCheck(): Promise<void> {
+        let port = parseInt(process.env.HEALTHCHECK_PORT);
+        if (isNaN(port)) {
+            port = 80;
+        }
+
+
+        const http = express();
+        http.get('/', (_, res) => {
+            res.send('Ok');
+        });
+
+        http.listen(port, () => {
+            Logger.log(`Health check on port ${port}`);
+        });
+    }
 }
 
 dotenv.config();
 const server = new Application();
+
+server.healthCheck().catch((err: Error) => {
+    Logger.error('Caught express error', err);
+});
 
 server.run().then(() => {
     Logger.log('Booted defiant');

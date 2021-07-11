@@ -1,5 +1,5 @@
 export interface Node {
-    nodeId: string;
+    nodeId?: string;
     host: string;
     port: number;
     isSelf?: undefined;

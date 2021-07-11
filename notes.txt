@@ -1,0 +1,18 @@
+## Deploy to minikube
+
+- start minikube, (it will overwrite your kubeconfig at $HOME/kubeconfig
+  $ minikube start
+  
+- build the container
+  $ yarn build:image
+
+- uninstall existing chart
+ $ helm ls
+ $ helm uninstall <installation>
+
+- package with helm
+ $ helm package defiant-kube
+
+- install with helm
+ $ helm install <name> <package-name>.tgz
+
