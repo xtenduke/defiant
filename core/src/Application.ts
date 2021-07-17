@@ -12,6 +12,8 @@ import {NodeDistributionMiddleware} from './middleware/NodeDistributionMiddlewar
 import {IDiscoveryService} from './service/discovery/IDiscoveryService';
 import {DNSDiscoveryService} from './service/discovery/DNSDiscoveryService';
 import express from 'express';
+import {IMembershipService} from './service/membership/IMembershipService';
+import {SwimMembershipService} from './service/membership/SwimMembershipService';
 
 export interface ApplicationConfig {
     port: number;
@@ -32,6 +34,7 @@ export class Application {
 
     private clusterManager: ClusterManager;
     private discoveryService: IDiscoveryService;
+    private membershipService: IMembershipService;
     private nodeDistributionMiddleware: NodeDistributionMiddleware;
 
     constructor() {
@@ -75,11 +78,13 @@ export class Application {
         );
 
         this.discoveryService = new DNSDiscoveryService();
+        this.membershipService = new SwimMembershipService();
 
         this.clusterManager = new ClusterManager(
             {}, //todo: client config overrides
             this.nodeId,
             this.discoveryService,
+            this.membershipService,
         );
 
         this.nodeDistributionMiddleware = new NodeDistributionMiddleware(this.clusterManager, this.nodeId);
