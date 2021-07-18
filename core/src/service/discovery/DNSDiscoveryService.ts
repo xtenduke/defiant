@@ -5,6 +5,7 @@ import {Logger} from '../../util/Logger';
 
 export interface Config {
     namespace: string;
+    membershipPort: number; // if we are using DNS for discovery, membership port MUST be consistent
 }
 
 export class DNSDiscoveryService implements IDiscoveryService {
@@ -33,7 +34,7 @@ export class DNSDiscoveryService implements IDiscoveryService {
                     const nodes: Node[] = addresses.map((address: string) => {
                         return {
                             host: address,
-                            port: 8080 // TODO: why am I still hardcoded?..
+                            port: this.config.membershipPort,
                         };
                     });
 

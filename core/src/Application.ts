@@ -78,6 +78,7 @@ export class Application {
         } else {
             this.discoveryService = new DNSDiscoveryService({
                 namespace: process.env.DNS_NAMESPACE,
+                membershipPort: this.config.membershipPort,
             });
         }
 
