@@ -24,7 +24,7 @@ export class Server {
             grpc.ServerCredentials.createInsecure(),
             (err: Error | null, port: number) => {
                 if (err) {
-                    Logger.error('[Server] error starting server:', err.message);
+                    Logger.error('[Server] error starting server:', err.message, this.config);
                     Promise.reject(err);
                 } else {
                     Logger.debug('[Server] bound on port', port);

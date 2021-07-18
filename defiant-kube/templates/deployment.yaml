@@ -35,10 +35,10 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: {{ .Values.vars.healthCheckPort }}
+              containerPort: {{ .Values.healthCheckPort }}
               protocol: TCP
             - name: grpc
-              containerPort: {{ .Values.vars.applicationPort }}
+              containerPort: {{ .Values.applicationPort }}
               protocol: UDP
           livenessProbe:
             httpGet:
@@ -49,20 +49,10 @@ spec:
               path: /
               port: http
           env:
-            - name: APPLICATION_PORT
-              value: {{ .Values.applicationPort }}
-            - name: MAX_SEND_ATTEMPTS
-              value: {{ .Values.maxSendAttempts }}
-            - name: BASE_RETRY_DELAY_MS
-              value: {{ .Values.baseRetryDelayMs }}
-            - name: CLIENT_RPC_PORT
-              value: {{ .Values.clientRpcPort }}
-            - name: MEMBERSHIP_PORT
-              value: {{ .Values.membershipPort }}
-            - name: HEALTH_CHECK_PORT
-              value: {{ .Values.healthCheckPort }}
-            - name: DNS_NAMESPACE
-              value: {{ .Values.dnsNamespace }}
+            {{- range .Values.vars }}
+              - name: {{ .name }}
+                value: {{ .value | quote }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

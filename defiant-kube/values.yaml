@@ -5,20 +5,28 @@ image:
   name: defiant
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "ea78036"
+  tag: "c31a33b"
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+applicationPort: "8080"
+healthCheckPort: "8082"
+
 vars:
-  applicationPort: "8080"
-  maxSendAttempts: "5"
-  baseRetryDelayMs: "30000"
-  clientRpcPort: "8080"
-  membershipPort: "8081"
-  healthCheckPort: "8082"
-  dnsNamespace: "defiant-defiant-kube.default.svc.cluster.local"
+   - name: "MAX_SEND_ATTEMPTS"
+     value: "5"
+   - name: "BASE_RETRY_DELAY_MS"
+     value: "30000"
+   - name: "CLIENT_RPC_PORT"
+     value: "8080"
+   - name: "MEMBERSHIP_PORT"
+     value: "8081"
+   - name: "HEALTH_CHECK_PORT"
+     value: "8082" 
+   - name: "DNS_NAMESPACE"
+     value: "defiant-defiant-kube.default.svc.cluster.local"
 
 serviceAccount:
   # Specifies whether a service account should be created
