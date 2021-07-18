@@ -5,7 +5,7 @@ image:
   name: defiant
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "bd247f9"
+  tag: "6862e91"
 
 imagePullSecrets: []
 nameOverride: ""

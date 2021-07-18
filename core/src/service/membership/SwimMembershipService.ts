@@ -3,6 +3,7 @@ import {Node} from '../../model/system/Node';
 import Swim from 'swim';
 import {NodeLeftReason} from './IMembershipService';
 import {Logger} from '../../util/Logger';
+import ip from 'ip';
 
 export interface SwimOptions {
     local: {
@@ -58,11 +59,14 @@ export interface Config {
 export class SwimMembershipService implements IMembershipService {
     private callback?: MembershipEventsCallback;
     private swim: any;
+    private ip: string;
 
     public constructor(config: Config) {
+        this.ip = ip.address();
+
         this.swim = new Swim({
             local: {
-                host: `0.0.0.0:${config.swimPort}`,
+                host: `${this.ip}:${config.swimPort}`,
                 meta: {
                     nodeId: config.nodeId,
                     nodePort: config.nodePort
@@ -76,7 +80,7 @@ export class SwimMembershipService implements IMembershipService {
         this.swim.on(EventType.Ready, this.onReady.bind(this));
         this.swim.on(EventType.Change, this.onChange.bind(this));
 
-        Logger.log(`[SwimMembershipService] started on port ${config.swimPort}`);
+        Logger.log(`[SwimMembershipService] started on ${this.ip}:${config.swimPort}`);
     }
 
     public async onDiscoveredNodes(nodes: Node[]): Promise<void> {
