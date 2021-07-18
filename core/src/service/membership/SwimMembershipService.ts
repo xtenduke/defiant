@@ -51,7 +51,8 @@ export interface SwimMetadata {
 export interface Config {
     nodeId: string;
     nodePort: number;
-    swimPort: number
+    swimPort: number;
+    joinTimeout: number;
 }
 
 export class SwimMembershipService implements IMembershipService {
@@ -67,6 +68,7 @@ export class SwimMembershipService implements IMembershipService {
                     nodePort: config.nodePort
                 }
             },
+            joinTimeout: config.joinTimeout,
         });
 
         this.swim.on(EventType.Update, this.onUpdate.bind(this));
@@ -79,14 +81,16 @@ export class SwimMembershipService implements IMembershipService {
 
     public async onDiscoveredNodes(nodes: Node[]): Promise<void> {
         return new Promise((resolve, reject) => {
-            this.swim.bootstrap(nodes.map((node) => `${node.host}:${node.port}`), (err: Error) => {
+            const mappedNodes = nodes.map((node) => `${node.host}:${node.port}`);
+
+            this.swim.bootstrap(mappedNodes, (err: Error) => {
                 if (err) {
                     Logger.error('[SwimMembershipService] discovered nodes failed', err, err.stack);
                     reject(err);
                 }
             });
 
-            Logger.log('[SwimMembershipService] bootstrapped nodes', nodes);
+            Logger.log('[SwimMembershipService] bootstrapped nodes', mappedNodes);
 
             resolve();
         });

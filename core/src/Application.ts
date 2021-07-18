@@ -94,6 +94,7 @@ export class Application {
             nodePort: this.config.port,
             nodeId: this.nodeId,
             swimPort: parseInt(process.env.MEMBERSHIP_PORT),
+            joinTimeout: parseInt(process.env.SWIM_JOIN_TIMEOUT_MS),
         });
 
         this.clusterManager = new ClusterManager(

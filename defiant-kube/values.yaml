@@ -5,7 +5,7 @@ image:
   name: defiant
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "600df69"
+  tag: "bd247f9"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -28,6 +28,8 @@ vars:
      value: "8082" 
    - name: "DNS_NAMESPACE"
      value: "defiant-defiant-kube.default.svc.cluster.local"
+   - name: "SWIM_JOIN_TIMEOUT_MS"
+     value: "30000"
 
 serviceAccount:
   # Specifies whether a service account should be created

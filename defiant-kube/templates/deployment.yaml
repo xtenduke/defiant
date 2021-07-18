@@ -42,7 +42,7 @@ spec:
               protocol: UDP
             - name: membership
               containerPort: {{ .Values.membershipPort }}
-              protocol: TCP
+              protocol: UDP
           livenessProbe:
             httpGet:
               path: /
