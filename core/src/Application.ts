@@ -65,7 +65,7 @@ export class Application {
         // some DI framework would be quite nice right now
         // config hack until we're containerised
         // JSONSafe should be removed when we have proper configuration loading and DI
-        const clusterConfig = { nodes: JSONSafe.parse(process.env.CLUSTER_CONFIG).map((config: {port: number}) => {
+        const clusterConfig = { nodes: JSONSafe.parse(process.env.CLUSTER_CONFIG)?.map((config: {port: number}) => {
             return {
                 ...config,
                 isSelf: config.port === this.config.port,
@@ -73,7 +73,7 @@ export class Application {
         })};
 
         // if cluster config exists, use static cluster discovery
-        if (clusterConfig && clusterConfig.nodes.length > 0) {
+        if (clusterConfig && clusterConfig.nodes && clusterConfig.nodes.length > 0) {
             this.discoveryService = new StaticDiscoveryService(clusterConfig);
         } else {
             this.discoveryService = new DNSDiscoveryService({

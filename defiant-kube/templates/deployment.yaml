@@ -40,6 +40,9 @@ spec:
             - name: grpc
               containerPort: {{ .Values.applicationPort }}
               protocol: UDP
+            - name: membership
+              containerPort: {{ .Values.membershipPort }}
+              protocol: TCP
           livenessProbe:
             httpGet:
               path: /

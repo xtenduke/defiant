@@ -1,17 +1,18 @@
-replicaCount: 40
+replicaCount: 10
 
 image:
   repository: docker.io/xtenduke/defiant
   name: defiant
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "c31a33b"
+  tag: "600df69"
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
 applicationPort: "8080"
+membershipPort: "8081"
 healthCheckPort: "8082"
 
 vars:

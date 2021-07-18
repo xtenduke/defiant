@@ -14,6 +14,6 @@ export interface MembershipEventsCallback {
 }
 
 export interface IMembershipService {
-    onDiscoveredNodes(nodes: Node[]): void;
+    onDiscoveredNodes(nodes: Node[]): Promise<void>;
     setCallback(callback: MembershipEventsCallback): void;
 }

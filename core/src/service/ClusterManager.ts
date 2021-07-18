@@ -25,7 +25,7 @@ export class ClusterManager implements MembershipEventsCallback {
     private async discover(): Promise<void> {
         const nodes = await this.discoveryService.discoverNodes();
         this.membershipService.setCallback(this);
-        this.membershipService.onDiscoveredNodes(nodes);
+        await this.membershipService.onDiscoveredNodes(nodes);
     }
 
     // membership management stuff

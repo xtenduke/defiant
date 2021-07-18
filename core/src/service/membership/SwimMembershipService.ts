@@ -77,10 +77,11 @@ export class SwimMembershipService implements IMembershipService {
         Logger.log(`[SwimMembershipService] started on port ${config.swimPort}`);
     }
 
-    public onDiscoveredNodes(nodes: Node[]): Promise<void> {
+    public async onDiscoveredNodes(nodes: Node[]): Promise<void> {
         return new Promise((resolve, reject) => {
             this.swim.bootstrap(nodes.map((node) => `${node.host}:${node.port}`), (err: Error) => {
                 if (err) {
+                    Logger.error('[SwimMembershipService] discovered nodes failed', err, err.stack);
                     reject(err);
                 }
             });
