@@ -1,5 +1,5 @@
-declare module 'swim' {
-    export interface SwimOptions {
+declare namespace swim {
+    interface SwimOptions {
         local: {
             host?: string,
             meta?: [string: string]
@@ -16,10 +16,10 @@ declare module 'swim' {
         preferCurrentMeta?: boolean
     }
 
-    export interface Update {
+    interface Update {
         meta: any,
         host: string,
-        state: Swim.State,
+        state: State,
         incarnation: number,
     }
 
@@ -33,27 +33,21 @@ declare module 'swim' {
         members(hasLocal: boolean, hasFaulty: boolean): any[];
         updateMeta(meta: any): any;
         whoami(): string;
-        on(event: Swim.EventType, callback:((update: Update | Error | undefined) => void)): void;
-
-        static Default: {
-            joinCheckInterval: number;
-            joinTimeout: number;
-        };
+        on(event: EventType, callback:((update: Update | Error | undefined) => void)): void;
     }
 
-    export namespace Swim {
-        export enum EventType {
-            Change = 'change',
+    export enum EventType {
+        Change = 'change',
             Error = 'error',
             Ready = 'ready',
             Update = 'update',
-        }
+    }
 
-        export enum State {
-            Alive = 0,
+    export enum State {
+        Alive = 0,
             Suspect = 1,
             Faulty = 2,
-        }
     }
 }
 
+export = swim;

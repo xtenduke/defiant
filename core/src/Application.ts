@@ -83,6 +83,7 @@ export class Application {
         this.membershipService = new SwimMembershipService({
             nodePort: this.config.port,
             nodeId: this.nodeId,
+            swimPort: parseInt(process.env.MEMBERSHIP_PORT),
         });
 
         this.clusterManager = new ClusterManager(
@@ -139,6 +140,6 @@ server.healthCheck().catch((err: Error) => {
 server.run().then(() => {
     Logger.log('defiant up');
 }).catch((err: Error) => {
-    Logger.error('defiant died', err);
+    Logger.error('defiant died', err, err.stack);
     process.exit(1);
 });
