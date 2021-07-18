@@ -21,7 +21,7 @@ export class Server {
         Logger.log('port problem?', port);
 
         this.server.bindAsync(
-            `0.0.0.0:${8080}`,
+            `0.0.0.0:${port}`,
             grpc.ServerCredentials.createInsecure(),
             (err: Error | null, port: number) => {
                 if (err) {

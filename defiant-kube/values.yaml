@@ -5,11 +5,19 @@ image:
   name: defiant
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "dc40d2f"
+  tag: "b5526af"
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+
+vars:
+  applicationPort: "8080"
+  maxSendAttempts: "5"
+  baseRetryDelayMs: "30000"
+  clientRpcPort: "8080"
+  membershipPort: "8081"
+  healthCheckPort: "8082"
 
 serviceAccount:
   # Specifies whether a service account should be created
