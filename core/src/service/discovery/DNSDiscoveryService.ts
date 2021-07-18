@@ -3,7 +3,13 @@ import {Node} from '../../model/system/Node';
 import * as dns from 'dns';
 import {Logger} from '../../util/Logger';
 
+export interface Config {
+    namespace: string;
+}
+
 export class DNSDiscoveryService implements IDiscoveryService {
+    public constructor(private config: Config) {}
+
     public async discoverNodes(attempt = 0): Promise<Node[]> {
 
         try {
@@ -16,7 +22,7 @@ export class DNSDiscoveryService implements IDiscoveryService {
     private async discover(): Promise<Node[]> {
         await DNSDiscoveryService.sleep(30000);
         return new Promise((resolve, reject) => {
-            dns.resolve4('defiant-defiant-kube.default.svc.cluster.local', (err, addresses) => {
+            dns.resolve4(this.config.namespace, (err, addresses) => {
                 if (err) {
                     Logger.error('DNS lookup error', err);
                     reject(err);
@@ -25,7 +31,7 @@ export class DNSDiscoveryService implements IDiscoveryService {
                     const nodes: Node[] = addresses.map((address: string) => {
                         return {
                             host: address,
-                            port: 8080
+                            port: 8080 // TODO: why am I still hardcoded?..
                         }
                     });
 

@@ -18,6 +18,7 @@ vars:
   clientRpcPort: "8080"
   membershipPort: "8081"
   healthCheckPort: "8082"
+  dnsNamespace: "defiant-defiant-kube.default.svc.cluster.local"
 
 serviceAccount:
   # Specifies whether a service account should be created

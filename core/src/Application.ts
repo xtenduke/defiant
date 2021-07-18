@@ -79,7 +79,10 @@ export class Application {
             this.rpcServer,
         );
 
-        this.discoveryService = new DNSDiscoveryService();
+        this.discoveryService = new DNSDiscoveryService({
+            namespace: process.env.DNS_NAMESPACE,
+        });
+
         this.membershipService = new SwimMembershipService({
             nodePort: this.config.port,
             nodeId: this.nodeId,

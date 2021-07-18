@@ -61,6 +61,8 @@ spec:
               value: {{ .Values.membershipPort }}
             - name: HEALTH_CHECK_PORT
               value: {{ .Values.healthCheckPort }}
+            - name: DNS_NAMESPACE
+              value: {{ .Values.dnsNamespace }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}
