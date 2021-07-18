@@ -1,8 +1,46 @@
 import {IMembershipService, MembershipEventsCallback} from './IMembershipService';
 import {Node} from '../../model/system/Node';
-import Swim, {EventType, Update, State, SwimOptions} from 'swim';
+import Swim from 'swim';
 import {NodeLeftReason} from './IMembershipService';
 import {Logger} from '../../util/Logger';
+
+export interface SwimOptions {
+    local: {
+        host?: string,
+        meta?: [string: string]
+    },
+    codec?: 'msgpack',
+    disseminationFactor?: number,
+    interval?: number,
+    joinTimeout?: number,
+    pingTimeout?: number,
+    pingReqTimeout?: number,
+    pingReqGroupSize?: number,
+    suspectTimeout?: number,
+    udp?: {maxDgramSize: number},
+    preferCurrentMeta?: boolean
+}
+
+export interface Update {
+    meta: any,
+    host: string,
+    state: State,
+    incarnation: number,
+}
+
+export enum State {
+    Alive = 0,
+    Suspect = 1,
+    Faulty = 2,
+}
+
+export enum EventType {
+    Change = 'change',
+    Error = 'error',
+    Ready = 'ready',
+    Update = 'update',
+}
+
 
 export interface SwimMetadata {
     nodeId: string;
@@ -27,9 +65,9 @@ export class SwimMembershipService implements IMembershipService {
                 meta: {
                     nodeId: config.nodeId,
                     nodePort: config.nodePort
-                } as SwimMetadata
+                }
             },
-        } as SwimOptions);
+        });
 
         this.swim.on(EventType.Update, this.onUpdate.bind(this));
         this.swim.on(EventType.Error, this.onError.bind(this));

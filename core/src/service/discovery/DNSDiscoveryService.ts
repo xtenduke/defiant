@@ -20,6 +20,8 @@ export class DNSDiscoveryService implements IDiscoveryService {
     }
 
     private async discover(): Promise<Node[]> {
+        Logger.log(`[DNSDiscoveryService] discovering on ${this.config.namespace}`);
+
         await DNSDiscoveryService.sleep(30000);
         return new Promise((resolve, reject) => {
             dns.resolve4(this.config.namespace, (err, addresses) => {
