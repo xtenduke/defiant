@@ -85,6 +85,8 @@ export class SwimMembershipService implements IMembershipService {
                 }
             });
 
+            Logger.log('[SwimMembershipService] bootstrapped nodes', nodes);
+
             resolve();
         });
     }

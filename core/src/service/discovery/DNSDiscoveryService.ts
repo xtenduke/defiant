@@ -34,7 +34,7 @@ export class DNSDiscoveryService implements IDiscoveryService {
                         return {
                             host: address,
                             port: 8080 // TODO: why am I still hardcoded?..
-                        }
+                        };
                     });
 
                     resolve(nodes);

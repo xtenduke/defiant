@@ -14,6 +14,7 @@ import {DNSDiscoveryService} from './service/discovery/DNSDiscoveryService';
 import express from 'express';
 import {IMembershipService} from './service/membership/IMembershipService';
 import {SwimMembershipService} from './service/membership/SwimMembershipService';
+import {StaticDiscoveryService} from './service/discovery/StaticDiscoveryService';
 
 export interface ApplicationConfig {
     port: number;
@@ -64,12 +65,21 @@ export class Application {
         // some DI framework would be quite nice right now
         // config hack until we're containerised
         // JSONSafe should be removed when we have proper configuration loading and DI
-        // const clusterConfig = JSONSafe.parse(process.env.CLUSTER_CONFIG).map((config: {port: number}) => {
-        //     return {
-        //         ...config,
-        //         isSelf: config.port === this.config.port,
-        //     };
-        // });
+        const clusterConfig = { nodes: JSONSafe.parse(process.env.CLUSTER_CONFIG).map((config: {port: number}) => {
+            return {
+                ...config,
+                isSelf: config.port === this.config.port,
+            };
+        })};
+
+        // if cluster config exists, use static cluster discovery
+        if (clusterConfig && clusterConfig.nodes.length > 0) {
+            this.discoveryService = new StaticDiscoveryService(clusterConfig);
+        } else {
+            this.discoveryService = new DNSDiscoveryService({
+                namespace: process.env.DNS_NAMESPACE,
+            });
+        }
 
         // cluster comms
         this.nodeService = new NodeService(this.nodeId);
@@ -78,10 +88,6 @@ export class Application {
             this.nodeService,
             this.rpcServer,
         );
-
-        this.discoveryService = new DNSDiscoveryService({
-            namespace: process.env.DNS_NAMESPACE,
-        });
 
         this.membershipService = new SwimMembershipService({
             nodePort: this.config.port,
