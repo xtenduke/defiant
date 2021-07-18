@@ -1,64 +1,55 @@
-import {ClusterConfig} from './NodeService';
-import {NodeLinkClient} from '../client/NodeClient';
 import {Logger} from '../util/Logger';
 import {BaseRPCClientConfig} from '../client/BaseRPCClient';
 import HashRing from 'hashring';
-import {InterrogateResponse} from '../../proto/gen/node_router/InterrogateResponse';
+import {Node} from '../model/system/Node';
+import {IDiscoveryService} from './discovery/IDiscoveryService';
+import {IMembershipService, MembershipEventsCallback, NodeAdvertiseData, NodeLeftReason} from './membership/IMembershipService';
 
-export interface ActiveNode {
-    nodeId: string;
-    host: string;
-    port: number;
-}
-
-export class ClusterManager {
-    private readonly clients: NodeLinkClient[];
+export class ClusterManager implements MembershipEventsCallback {
+    private nodes: Map<string, Node> = new Map(); 
     private hashRing: HashRing;
-    private nodes: ActiveNode[];
 
     public constructor(
         private readonly clientConfig: BaseRPCClientConfig,
-        private readonly config: ClusterConfig,
-        private readonly currentNodeId: string
-    ) {
-        // construct clients
-        this.clients = config.nodes.filter((nodeConfig) => !nodeConfig.isSelf).map((nodeConfig) => {
-            return new NodeLinkClient(clientConfig, nodeConfig, currentNodeId);
-        });
-    }
+        private readonly currentNodeId: string,
+        private readonly discoveryService: IDiscoveryService,
+        private readonly membershipService: IMembershipService,
+    ) {}
 
     public async start(): Promise<void> {
-        this.nodes = await this.interrogate();
-        this.hashRing = this.populateHashRing(this.nodes, this.currentNodeId);
+        Logger.log('ClusterManager started with config', this.clientConfig);
+        this.hashRing = new HashRing([this.currentNodeId]);
+        await this.discover();
     }
 
-    private async interrogate(): Promise<ActiveNode[]> {
-        const result = Promise.all(this.clients.map(async (client) => {
-            const interrogation = await client.interrogate();
-            return {
-                nodeId: interrogation.nodeId,
-                host: client.getNodeConfig().host,
-                port: client.getNodeConfig().port,
-            };
-        }));
-
-        Logger.log(`[ClusterManager] interrogate complete on node ${this.currentNodeId}`);
-
-        return result;
+    private async discover(): Promise<void> {
+        const nodes = await this.discoveryService.discoverNodes();
+        this.membershipService.setCallback(this);
+        await this.membershipService.onDiscoveredNodes(nodes);
     }
 
-    private populateHashRing(nodes: InterrogateResponse[], currentNodeId: string): HashRing {
-        const nodeIds = nodes.map((node) => node.nodeId);
-        nodeIds.push(currentNodeId);
-
-        return new HashRing(nodeIds);
+    // membership management stuff
+    public onNodeAdded(node: NodeAdvertiseData): void {
+        this.nodes.set(node.nodeId, node);
+        this.hashRing.add(`${node.host}:${node.port}`);
     }
 
-    public getDestination(hash: string): ActiveNode {
+    public onNodeRemoved(node: NodeAdvertiseData, reason: NodeLeftReason): void {
+        this.nodes.delete(node.nodeId);
+        Logger.log('Node removed', reason)
+        this.hashRing.remove(`${node.host}:${node.port}`)
+    }
+
+    public onNodeRecovered(node: NodeAdvertiseData): void {
+        this.onNodeAdded(node);
+        // todo: support me?
+    }
+
+    public getDestination(hash: string): Node {
         if (!this.hashRing) {
             throw new Error('Cluster not ready');
         }
-        const destinationId = this.hashRing.get(hash);
-        return this.nodes.find((node) => node.nodeId === destinationId);
+        const nodeId = this.hashRing.get(hash);
+        return this.nodes.get(nodeId);
     }
 }

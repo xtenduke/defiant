@@ -35,8 +35,14 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
-              containerPort: 80
+              containerPort: {{ .Values.healthCheckPort }}
               protocol: TCP
+            - name: grpc
+              containerPort: {{ .Values.applicationPort }}
+              protocol: UDP
+            - name: membership
+              containerPort: {{ .Values.membershipPort }}
+              protocol: UDP
           livenessProbe:
             httpGet:
               path: /
@@ -45,6 +51,11 @@ spec:
             httpGet:
               path: /
               port: http
+          env:
+            {{- range .Values.vars }}
+              - name: {{ .name }}
+                value: {{ .value | quote }}
+            {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       {{- with .Values.nodeSelector }}

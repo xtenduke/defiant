@@ -1,4 +1,4 @@
-import {Node} from '../service/NodeService';
+import {Node} from '../model/system/Node';
 import * as protoLoader from '@grpc/proto-loader';
 import * as grpc from '@grpc/grpc-js';
 import {ProtoGrpcType} from '../../proto/gen/route_node_router';
