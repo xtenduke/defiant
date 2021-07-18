@@ -19,6 +19,7 @@ export interface ApplicationConfig {
     port: number;
     nodeId: string;
     cluster: boolean;
+    membershipPort: number;
 }
 
 export class Application {
@@ -47,6 +48,7 @@ export class Application {
 
         this.config = {
             port: parseInt(process.env.CLIENT_RPC_PORT),
+            membershipPort: parseInt(process.env.MEMBERSHIP_PORT),
             nodeId: this.nodeId,
             cluster: JSONSafe.parse(process.env.CLUSTER)
         };
@@ -55,7 +57,7 @@ export class Application {
     }
 
     public async run(): Promise<void> {
-        Logger.log(`Booting application, node: ${this.nodeId}`);
+        Logger.log(`booting defiant, node: ${this.nodeId}`, this.config);
 
         await this.rpcServer.start();
         // bind controllers
@@ -78,7 +80,10 @@ export class Application {
         );
 
         this.discoveryService = new DNSDiscoveryService();
-        this.membershipService = new SwimMembershipService();
+        this.membershipService = new SwimMembershipService({
+            nodePort: this.config.port,
+            nodeId: this.nodeId,
+        });
 
         this.clusterManager = new ClusterManager(
             {}, //todo: client config overrides
@@ -91,12 +96,10 @@ export class Application {
 
         // queue specific stuff
 
-        this.queueService = new QueueService(
-            {
-                messageMaxSendAttempts: parseInt(process.env.MAX_SEND_ATTEMPTS),
-                messageBaseRetryDelay: parseInt(process.env.BASE_RETRY_DELAY_MS),
-            }
-        );
+        this.queueService = new QueueService({
+            messageMaxSendAttempts: parseInt(process.env.MAX_SEND_ATTEMPTS),
+            messageBaseRetryDelay: parseInt(process.env.BASE_RETRY_DELAY_MS),
+        });
 
         this.clientController = new ClientController(
             this.queueService,
@@ -111,7 +114,7 @@ export class Application {
     public async healthCheck(): Promise<void> {
         let port = parseInt(process.env.HEALTHCHECK_PORT);
         if (isNaN(port)) {
-            port = 80;
+            port = 8082;
         }
 
 
@@ -134,7 +137,7 @@ server.healthCheck().catch((err: Error) => {
 });
 
 server.run().then(() => {
-    Logger.log('Booted defiant');
+    Logger.log('defiant up');
 }).catch((err: Error) => {
     Logger.error('defiant died', err);
     process.exit(1);
