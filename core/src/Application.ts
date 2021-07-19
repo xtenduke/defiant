@@ -53,8 +53,6 @@ export class Application {
             nodeId: this.nodeId,
             cluster: JSONSafe.parse(process.env.CLUSTER)
         };
-
-        Logger.updateContext({ nodeId: this.nodeId, port: this.config.port });
     }
 
     public async run(): Promise<void> {
@@ -95,6 +93,9 @@ export class Application {
             nodeId: this.nodeId,
             swimPort: parseInt(process.env.MEMBERSHIP_PORT),
             joinTimeout: parseInt(process.env.SWIM_JOIN_TIMEOUT_MS),
+            pingTimeout: parseInt(process.env.SWIM_PING_TIMEOUT_MS),
+            pingReqTimeout: parseInt(process.env.SWIM_PING_REQ_TIMEOUT_MS),
+            suspectTimeout: parseInt(process.env.SWIM_SUSPECT_TIMEOUT_MS),
         });
 
         this.clusterManager = new ClusterManager(

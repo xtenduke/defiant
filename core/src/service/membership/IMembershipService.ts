@@ -10,7 +10,7 @@ export interface NodeAdvertiseData extends Node {};
 export interface MembershipEventsCallback {
     onNodeAdded(node: NodeAdvertiseData): void;
     onNodeRemoved(node: NodeAdvertiseData, reason: NodeLeftReason): void;
-    onNodeRecovered(node: NodeAdvertiseData): void;
+    onNodeUpdate(node: NodeAdvertiseData): void;
 }
 
 export interface IMembershipService {
