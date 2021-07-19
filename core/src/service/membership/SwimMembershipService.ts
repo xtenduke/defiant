@@ -149,14 +149,14 @@ export class SwimMembershipService implements IMembershipService {
         switch (update.state) {
         case State.Alive:
             Logger.log('[SwimMembershipService] onUpdate - node update', update.host);
-            this.callback?.onNodeUpdate(nodeData);
+            // todo: disabled - this.callback?.onNodeUpdate(nodeData);
             break;
         case State.Suspect:
             Logger.log('[SwimMembershipService] onUpdate - node is suspect!', update.host);
             break;
         case State.Faulty:
             Logger.log('[SwimMembershipService] onUpdate - node leaving', update.host);
-            this.callback?.onNodeRemoved(nodeData, NodeLeftReason.NODE_LEFT);
+            // todo: disabled - this.callback?.onNodeRemoved(nodeData, NodeLeftReason.NODE_LEFT);
             break;
         default:
             Logger.log('[SwimMembershipService] onUpdate... unknown', update);

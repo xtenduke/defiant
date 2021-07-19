@@ -40,9 +40,8 @@ export class ClusterManager implements MembershipEventsCallback {
         this.hashRing.remove(`${node.host}:${node.port}`)
     }
 
-    public onNodeRecovered(node: NodeAdvertiseData): void {
+    public onNodeUpdate(node: NodeAdvertiseData): void {
         this.onNodeAdded(node);
-        // todo: support me?
     }
 
     public getDestination(hash: string): Node {
