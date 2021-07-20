@@ -5,7 +5,7 @@ image:
   name: defiant
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "6862e91"
+  tag: "be456bc"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -30,6 +30,16 @@ vars:
      value: "defiant-defiant-kube.default.svc.cluster.local"
    - name: "SWIM_JOIN_TIMEOUT_MS"
      value: "30000"
+   - name: "SWIM_PING_TIMEOUT_MS"
+     value: "5000"
+   - name: "SWIM_PING_REQ_TIMEOUT_MS"
+     value: "5000"
+   - name: "SWIM_SUSPECT_TIMEOUT_MS"
+     value: "5000"
+   - name: "RES_OPTIONS"
+     value: "ndots:4 retrans:20000 retry:6 rotate"
+   - name: "UV_THREADPOOL_SIZE"
+     value: "64"
 
 serviceAccount:
   # Specifies whether a service account should be created

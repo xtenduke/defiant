@@ -8,7 +8,6 @@ enum Level {
 export class Logger {
     private static context: any;
 
-    // todo: CLS hooked would be nice
     public static updateContext(values: any): void {
         this.context = {
             ...this.context,
@@ -39,7 +38,9 @@ export class Logger {
         }
 
         // add log context
-        values.push(this.context);
+        if (this.context) {
+            values.push(this.context);
+        }
 
         let prefix, output = '';
         const suffix = '\x1b[0m';

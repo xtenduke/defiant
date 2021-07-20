@@ -54,6 +54,9 @@ export interface Config {
     nodePort: number;
     swimPort: number;
     joinTimeout: number;
+    pingTimeout: number;
+    pingReqTimeout: number;
+    suspectTimeout: number;
 }
 
 export class SwimMembershipService implements IMembershipService {
@@ -73,6 +76,9 @@ export class SwimMembershipService implements IMembershipService {
                 }
             },
             joinTimeout: config.joinTimeout,
+            pingTimeout: config.pingTimeout,
+            pingReqTimeout: config.pingReqTimeout,
+            suspectTimeout: config.suspectTimeout,
         });
 
         this.swim.on(EventType.Update, this.onUpdate.bind(this));
@@ -104,7 +110,6 @@ export class SwimMembershipService implements IMembershipService {
      * Change on membership, i.e. new node or node died / left
      */
     public onChange(change: Update): void {
-        Logger.log('[SwimMembershipService] onChange', change);
         const nodeData: Node = {
             nodeId: change.meta.nodeId,
             host: change.host.split(':')[0],
@@ -113,13 +118,18 @@ export class SwimMembershipService implements IMembershipService {
 
         switch (change.state) {
         case State.Alive:
+            Logger.log('[SwimMembershipService] onChange - new node', change.host);
             this.callback?.onNodeAdded(nodeData);
             break;
         case State.Suspect:
-            Logger.log('[SwimMembershipService] node is suspect!', nodeData);
+            Logger.log('[SwimMembershipService] node is suspect!', change.host);
             break;
         case State.Faulty:
+            Logger.log('[SwimMembershipService] onChange - node faulty', change.host);
             this.callback?.onNodeRemoved(nodeData, NodeLeftReason.NODE_DIED); // todo: how is this coming through?
+            break;
+        default:
+            Logger.log('[SwimMembershipService] onChange - unknown', change);
             break;
         }
     }
@@ -128,9 +138,30 @@ export class SwimMembershipService implements IMembershipService {
      * Node recovered, or update metadata
      */
     private onUpdate(update: Update): void {
-        Logger.log('[SwimMembershipService] onUpdate', update);
-        // todo: handle updated metadata etc
-        // are we going to force remove all suspect nodes and re-add them?
+        const nodeData: Node = {
+            nodeId: update.meta.nodeId,
+            host: update.host.split(':')[0],
+            port: update.meta.nodePort, // don't pass through the swim port
+        };
+
+        this.callback?.onNodeUpdate(nodeData);
+
+        switch (update.state) {
+        case State.Alive:
+            Logger.log('[SwimMembershipService] onUpdate - node update', update.host);
+            // todo: disabled - this.callback?.onNodeUpdate(nodeData);
+            break;
+        case State.Suspect:
+            Logger.log('[SwimMembershipService] onUpdate - node is suspect!', update.host);
+            break;
+        case State.Faulty:
+            Logger.log('[SwimMembershipService] onUpdate - node leaving', update.host);
+            // todo: disabled - this.callback?.onNodeRemoved(nodeData, NodeLeftReason.NODE_LEFT);
+            break;
+        default:
+            Logger.log('[SwimMembershipService] onUpdate... unknown', update);
+            break;
+        }
     }
 
     private onError(error: Error): void {
