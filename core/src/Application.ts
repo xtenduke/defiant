@@ -15,6 +15,7 @@ import express from 'express';
 import {IMembershipService} from './service/membership/IMembershipService';
 import {SwimMembershipService} from './service/membership/SwimMembershipService';
 import {StaticDiscoveryService} from './service/discovery/StaticDiscoveryService';
+import {Config} from './util/Config';
 
 export interface ApplicationConfig {
     port: number;
@@ -43,13 +44,13 @@ export class Application {
         this.nodeId = randomUUID();
 
         this.rpcServer = new Server({
-            port: parseInt(process.env.CLIENT_RPC_PORT),
+            port: Config.safeParseInt(process.env.CLIENT_RPC_PORT),
             grpcServerConfig: JSONSafe.parse(process.env.GRPC_CONNECTION_CONFIG),
         });
 
         this.config = {
-            port: parseInt(process.env.CLIENT_RPC_PORT),
-            membershipPort: parseInt(process.env.MEMBERSHIP_PORT),
+            port: Config.safeParseInt(process.env.CLIENT_RPC_PORT),
+            membershipPort: Config.safeParseInt(process.env.MEMBERSHIP_PORT),
             nodeId: this.nodeId,
             cluster: JSONSafe.parse(process.env.CLUSTER)
         };
@@ -91,11 +92,11 @@ export class Application {
         this.membershipService = new SwimMembershipService({
             nodePort: this.config.port,
             nodeId: this.nodeId,
-            swimPort: parseInt(process.env.MEMBERSHIP_PORT),
-            joinTimeout: parseInt(process.env.SWIM_JOIN_TIMEOUT_MS),
-            pingTimeout: parseInt(process.env.SWIM_PING_TIMEOUT_MS),
-            pingReqTimeout: parseInt(process.env.SWIM_PING_REQ_TIMEOUT_MS),
-            suspectTimeout: parseInt(process.env.SWIM_SUSPECT_TIMEOUT_MS),
+            swimPort: Config.safeParseInt(process.env.MEMBERSHIP_PORT),
+            joinTimeout: Config.safeParseInt(process.env.SWIM_JOIN_TIMEOUT_MS),
+            pingTimeout: Config.safeParseInt(process.env.SWIM_PING_TIMEOUT_MS),
+            pingReqTimeout: Config.safeParseInt(process.env.SWIM_PING_REQ_TIMEOUT_MS),
+            suspectTimeout: Config.safeParseInt(process.env.SWIM_SUSPECT_TIMEOUT_MS),
         });
 
         this.clusterManager = new ClusterManager(
@@ -110,8 +111,8 @@ export class Application {
         // queue specific stuff
 
         this.queueService = new QueueService({
-            messageMaxSendAttempts: parseInt(process.env.MAX_SEND_ATTEMPTS),
-            messageBaseRetryDelay: parseInt(process.env.BASE_RETRY_DELAY_MS),
+            messageMaxSendAttempts: Config.safeParseInt(process.env.MAX_SEND_ATTEMPTS),
+            messageBaseRetryDelay: Config.safeParseInt(process.env.BASE_RETRY_DELAY_MS),
         });
 
         this.clientController = new ClientController(
@@ -125,8 +126,8 @@ export class Application {
     }
 
     public async healthCheck(): Promise<void> {
-        let port = parseInt(process.env.HEALTHCHECK_PORT);
-        if (isNaN(port)) {
+        let port = Config.safeParseInt(process.env.HEALTHCHECK_PORT);
+        if (!port) {
             port = 8082;
         }
 

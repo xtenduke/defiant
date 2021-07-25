@@ -1,4 +1,4 @@
-replicaCount: 10
+replicaCount: 16
 
 image:
   repository: docker.io/xtenduke/defiant
@@ -36,8 +36,6 @@ vars:
      value: "5000"
    - name: "SWIM_SUSPECT_TIMEOUT_MS"
      value: "5000"
-   - name: "RES_OPTIONS"
-     value: "ndots:4 retrans:20000 retry:6 rotate"
    - name: "UV_THREADPOOL_SIZE"
      value: "64"
 
