@@ -53,6 +53,7 @@ export interface Config {
     nodeId: string;
     nodePort: number;
     swimPort: number;
+    interval: number;
     joinTimeout: number;
     pingTimeout: number;
     pingReqTimeout: number;
@@ -75,6 +76,7 @@ export class SwimMembershipService implements IMembershipService {
                     nodePort: config.nodePort
                 }
             },
+            interval: config.interval,
             joinTimeout: config.joinTimeout,
             pingTimeout: config.pingTimeout,
             pingReqTimeout: config.pingReqTimeout,
@@ -121,9 +123,6 @@ export class SwimMembershipService implements IMembershipService {
             Logger.log('[SwimMembershipService] onChange - new node', change.host);
             this.callback?.onNodeAdded(nodeData);
             break;
-        case State.Suspect:
-            Logger.log('[SwimMembershipService] node is suspect!', change.host);
-            break;
         case State.Faulty:
             Logger.log('[SwimMembershipService] onChange - node faulty', change.host);
             this.callback?.onNodeRemoved(nodeData, NodeLeftReason.NODE_DIED); // todo: how is this coming through?
@@ -144,19 +143,17 @@ export class SwimMembershipService implements IMembershipService {
             port: update.meta.nodePort, // don't pass through the swim port
         };
 
-        this.callback?.onNodeUpdate(nodeData);
-
         switch (update.state) {
         case State.Alive:
             Logger.log('[SwimMembershipService] onUpdate - node update', update.host);
-            // todo: disabled - this.callback?.onNodeUpdate(nodeData);
+            this.callback?.onNodeUpdate(nodeData);
             break;
         case State.Suspect:
             Logger.log('[SwimMembershipService] onUpdate - node is suspect!', update.host);
             break;
         case State.Faulty:
             Logger.log('[SwimMembershipService] onUpdate - node leaving', update.host);
-            // todo: disabled - this.callback?.onNodeRemoved(nodeData, NodeLeftReason.NODE_LEFT);
+            this.callback?.onNodeRemoved(nodeData, NodeLeftReason.NODE_LEFT);
             break;
         default:
             Logger.log('[SwimMembershipService] onUpdate... unknown', update);

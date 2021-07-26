@@ -35,9 +35,11 @@ export class ClusterManager implements MembershipEventsCallback {
     }
 
     public onNodeRemoved(node: NodeAdvertiseData, reason: NodeLeftReason): void {
-        this.nodes.delete(node.nodeId);
-        Logger.log('Node removed', reason)
-        this.hashRing.remove(`${node.host}:${node.port}`)
+        if (this.nodes.has(node.nodeId)) {
+            this.nodes.delete(node.nodeId);
+            Logger.log('Node removed', reason);
+            this.hashRing.remove(`${node.host}:${node.port}`);
+        } //else node already removed, or removed node that didn't exist
     }
 
     public onNodeUpdate(node: NodeAdvertiseData): void {

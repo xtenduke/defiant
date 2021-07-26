@@ -1,11 +1,11 @@
-replicaCount: 10
+replicaCount: 16
 
 image:
   repository: docker.io/xtenduke/defiant
   name: defiant
   pullPolicy: Always
   # Overrides the image tag whose default is the chart appVersion.
-  tag: "be456bc"
+  tag: "6f6e81b"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -29,15 +29,15 @@ vars:
    - name: "DNS_NAMESPACE"
      value: "defiant-defiant-kube.default.svc.cluster.local"
    - name: "SWIM_JOIN_TIMEOUT_MS"
-     value: "30000"
+     value: "5000"
+   - name: "SWIM_PING_INTERVAL_MS"
+     value: "2500"
    - name: "SWIM_PING_TIMEOUT_MS"
-     value: "5000"
+     value: "1000"
    - name: "SWIM_PING_REQ_TIMEOUT_MS"
-     value: "5000"
+     value: "1000"
    - name: "SWIM_SUSPECT_TIMEOUT_MS"
-     value: "5000"
-   - name: "RES_OPTIONS"
-     value: "ndots:4 retrans:20000 retry:6 rotate"
+     value: "1000"
    - name: "UV_THREADPOOL_SIZE"
      value: "64"
 
