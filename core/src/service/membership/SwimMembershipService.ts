@@ -53,6 +53,7 @@ export interface Config {
     nodeId: string;
     nodePort: number;
     swimPort: number;
+    interval: number;
     joinTimeout: number;
     pingTimeout: number;
     pingReqTimeout: number;
@@ -75,6 +76,7 @@ export class SwimMembershipService implements IMembershipService {
                     nodePort: config.nodePort
                 }
             },
+            interval: config.interval,
             joinTimeout: config.joinTimeout,
             pingTimeout: config.pingTimeout,
             pingReqTimeout: config.pingReqTimeout,

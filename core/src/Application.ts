@@ -93,6 +93,7 @@ export class Application {
             nodePort: this.config.port,
             nodeId: this.nodeId,
             swimPort: Config.safeParseInt(process.env.MEMBERSHIP_PORT),
+            interval: Config.safeParseInt(process.env.SWIM_PING_INTERVAL_MS),
             joinTimeout: Config.safeParseInt(process.env.SWIM_JOIN_TIMEOUT_MS),
             pingTimeout: Config.safeParseInt(process.env.SWIM_PING_TIMEOUT_MS),
             pingReqTimeout: Config.safeParseInt(process.env.SWIM_PING_REQ_TIMEOUT_MS),
