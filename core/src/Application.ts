@@ -78,6 +78,8 @@ export class Application {
             this.discoveryService = new DNSDiscoveryService({
                 namespace: process.env.DNS_NAMESPACE,
                 membershipPort: this.config.membershipPort,
+                waitMs: Config.safeParseInt(process.env.DNS_DISCOVERY_WAIT_MS, 30000),
+                maxAttempts: Config.safeParseInt(process.env.DNS_DISCOVERY_MAX_ATTEMPTS, 5),
             });
         }
 
@@ -127,11 +129,7 @@ export class Application {
     }
 
     public async healthCheck(): Promise<void> {
-        let port = Config.safeParseInt(process.env.HEALTHCHECK_PORT);
-        if (!port) {
-            port = 8082;
-        }
-
+        const port = Config.safeParseInt(process.env.HEALTHCHECK_PORT, 8082);
 
         const http = express();
         http.get('/', (_, res) => {
