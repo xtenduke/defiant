@@ -31,14 +31,14 @@ export class ClusterManager implements MembershipEventsCallback {
     // membership management stuff
     public onNodeAdded(node: NodeAdvertiseData): void {
         this.nodes.set(node.nodeId, node);
-        this.hashRing.add(`${node.host}:${node.port}`);
+        this.hashRing.add(node.nodeId);
     }
 
     public onNodeRemoved(node: NodeAdvertiseData, reason: NodeLeftReason): void {
         if (this.nodes.has(node.nodeId)) {
             this.nodes.delete(node.nodeId);
             Logger.log('Node removed', reason);
-            this.hashRing.remove(`${node.host}:${node.port}`);
+            this.hashRing.remove(node.nodeId);
         } //else node already removed, or removed node that didn't exist
     }
 
