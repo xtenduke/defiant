@@ -95,9 +95,9 @@ export class SwimMembershipService implements IMembershipService {
         return new Promise((resolve, reject) => {
             const mappedNodes = nodes.map((node) => `${node.host}:${node.port}`);
 
-            this.swim.bootstrap(mappedNodes, (err: Error) => {
+            this.swim.bootstrap(mappedNodes, (err: any) => {
                 if (err) {
-                    Logger.error('[SwimMembershipService] discovered nodes failed', err, err.stack);
+                    Logger.error('[SwimMembershipService] discovered nodes failed', err, JSON.stringify(err.meta, undefined, 2));
                     reject(err);
                 }
             });
